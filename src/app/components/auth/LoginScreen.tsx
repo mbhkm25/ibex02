@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, Wallet } from 'lucide-react';
+import { ChevronRight, Wallet, Fingerprint, ScanFace } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Card } from '../ui/card';
+import { toast } from 'sonner';
 
 export function LoginScreen() {
   const navigate = useNavigate();
@@ -17,6 +18,16 @@ export function LoginScreen() {
     e.preventDefault();
     // Navigate to dashboard
     navigate('/dashboard');
+  };
+
+  const handleBiometricLogin = () => {
+    toast.info('جاري التحقق من البصمة...', {
+        duration: 1500,
+        onAutoClose: () => {
+            toast.success('تم التحقق بنجاح');
+            setTimeout(() => navigate('/dashboard'), 500);
+        }
+    });
   };
 
   return (
@@ -73,6 +84,36 @@ export function LoginScreen() {
             <Button type="submit" className="w-full h-12 rounded-xl text-base bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200">
                 تسجيل الدخول
             </Button>
+            
+            <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-gray-100" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-2 text-gray-500">أو سجل الدخول عبر</span>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+                <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="h-12 rounded-xl border-gray-100 hover:bg-gray-50 hover:text-blue-600 gap-2"
+                    onClick={handleBiometricLogin}
+                >
+                    <Fingerprint className="w-5 h-5" />
+                    <span>البصمة</span>
+                </Button>
+                <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="h-12 rounded-xl border-gray-100 hover:bg-gray-50 hover:text-blue-600 gap-2"
+                    onClick={handleBiometricLogin}
+                >
+                    <ScanFace className="w-5 h-5" />
+                    <span>الوجه</span>
+                </Button>
+            </div>
             </form>
         </Card>
 
