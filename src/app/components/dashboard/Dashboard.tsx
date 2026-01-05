@@ -7,8 +7,7 @@ import {
   CreditCard,
   Utensils,
   Car,
-  Send,
-  Plus,
+  ScanLine,
   ChevronRight
 } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -36,14 +35,21 @@ export function Dashboard() {
           {/* Right Column (Main Stats & Actions) */}
           <div className="lg:col-span-8 space-y-6">
             
-             {/* Quick Actions Grid - Updated Layout */}
+             {/* Quick Actions Grid - Updated to include Payment and Store Scan */}
              <div className="grid grid-cols-2 gap-4">
                 <QuickActionCard 
                   icon={<QrCode className="w-6 h-6 text-blue-600" />} 
-                  title="مسح كود" 
-                  desc="ادفع فوراً"
+                  title="مسح متجر" 
+                  desc="للاشتراك والتصفح"
                   color="bg-blue-50"
-                  onClick={() => navigate('/scan')}
+                  onClick={() => navigate('/scan/store')}
+                />
+                <QuickActionCard 
+                  icon={<ScanLine className="w-6 h-6 text-green-600" />} 
+                  title="دفع فوري" 
+                  desc="سداد الفواتير"
+                  color="bg-green-50"
+                  onClick={() => navigate('/scan/pay')}
                 />
                 <QuickActionCard 
                   icon={<Search className="w-6 h-6 text-purple-600" />} 
@@ -51,6 +57,13 @@ export function Dashboard() {
                   desc="متاجر حولك"
                   color="bg-purple-50"
                   onClick={() => navigate('/explore')}
+                />
+                <QuickActionCard 
+                  icon={<Wallet className="w-6 h-6 text-orange-600" />} 
+                  title="اشتراكاتي" 
+                  desc="الأعمال المشترك بها"
+                  color="bg-orange-50"
+                  onClick={() => navigate('/subscriptions')}
                 />
              </div>
 
@@ -137,9 +150,9 @@ export function Dashboard() {
             <Card className="p-5 border-0 shadow-sm rounded-3xl bg-gray-900 text-white relative overflow-hidden">
                <div className="relative z-10">
                  <h4 className="text-lg font-bold mb-2">ابدأ تجارتك اليوم</h4>
-                 <p className="text-sm text-gray-300 mb-4">أنشئ متجرك الإلكتروني في دقائق وابدأ البيع.</p>
-                 <Button size="sm" className="bg-white text-gray-900 hover:bg-gray-100 rounded-xl" onClick={() => navigate('/create-store')}>
-                   إنشاء متجر
+                 <p className="text-sm text-gray-300 mb-4">اطلب خدمة إدارة العملاء لإدارة عملائك وطلباتك.</p>
+                 <Button size="sm" className="bg-white text-gray-900 hover:bg-gray-100 rounded-xl" onClick={() => navigate('/business/request')}>
+                   طلب خدمة إدارة العملاء
                  </Button>
                </div>
                <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-primary rounded-full opacity-20 blur-xl"></div>

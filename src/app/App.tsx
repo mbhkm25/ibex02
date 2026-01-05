@@ -13,9 +13,19 @@ import { CreateStore } from './components/merchant/CreateStore';
 import { MerchantDashboard } from './components/merchant/MerchantDashboard';
 import { CustomerProfile } from './components/merchant/CustomerProfile';
 import { QRScanner } from './components/customer/QRScanner';
+import { PaymentQRScanner } from './components/customer/PaymentQRScanner';
 import { CustomerWallet } from './components/customer/CustomerWallet';
 import { ExploreBusiness } from './components/customer/ExploreBusiness';
 import { MySubscriptions } from './components/customer/MySubscriptions';
+import { ProductsAndServices } from './components/customer/ProductsAndServices';
+
+// Business Pages
+import { BusinessServiceRequest } from './components/business/BusinessServiceRequest';
+import { MyBusinesses } from './components/business/MyBusinesses';
+import { BusinessManagement } from './components/business/BusinessManagement';
+import { BusinessProducts } from './components/business/BusinessProducts';
+import { CustomerTransactionHistory } from './components/business/CustomerTransactionHistory';
+import { CustomerChat } from './components/business/CustomerChat';
 
 // Cashier App
 import { CashierApp } from './components/cashier/CashierApp';
@@ -41,10 +51,21 @@ export default function App() {
           <Route path="/merchant/:storeId/customer/:customerId" element={<CustomerProfile />} />
           
           {/* Customer Routes */}
-          <Route path="/scan" element={<QRScanner />} />
+          <Route path="/scan" element={<Navigate to="/scan/store" replace />} />
+          <Route path="/scan/store" element={<QRScanner />} />
+          <Route path="/scan/pay" element={<PaymentQRScanner />} />
           <Route path="/wallet/:storeId" element={<CustomerWallet />} />
+          <Route path="/wallet/:storeId/products" element={<ProductsAndServices />} />
           <Route path="/explore" element={<ExploreBusiness />} />
           <Route path="/subscriptions" element={<MySubscriptions />} />
+          
+          {/* Business Routes */}
+          <Route path="/business" element={<MyBusinesses />} />
+          <Route path="/business/request" element={<BusinessServiceRequest />} />
+          <Route path="/business/:businessId/manage" element={<BusinessManagement />} />
+          <Route path="/business/:businessId/products" element={<BusinessProducts />} />
+          <Route path="/business/:businessId/customer/:customerId/history" element={<CustomerTransactionHistory />} />
+          <Route path="/business/:businessId/customer/:customerId/chat" element={<CustomerChat />} />
           
           {/* Cashier Routes */}
           <Route path="/cashier/:storeId" element={<CashierApp />} />
