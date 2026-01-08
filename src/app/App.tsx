@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
@@ -28,12 +29,23 @@ import { BusinessProducts } from './components/business/BusinessProducts';
 import { BusinessOffers } from './components/business/BusinessOffers';
 import { CustomerTransactionHistory } from './components/business/CustomerTransactionHistory';
 import { CustomerChat } from './components/business/CustomerChat';
+import { Customer360Profile } from './components/business/Customer360Profile';
 
 // Cashier App
 import { CashierApp } from './components/cashier/CashierApp';
 
 // Notifications
 import { NotificationsScreen } from './components/notifications/NotificationsScreen';
+
+// Admin Pages
+import { AdminLogin } from './components/admin/AdminLogin';
+import { AdminDashboard } from './components/admin/AdminDashboard';
+import { AdminUsers } from './components/admin/AdminUsers';
+import { AdminPackages } from './components/admin/AdminPackages';
+import { AdminBusinesses } from './components/admin/AdminBusinesses';
+import { AdminServiceRequests } from './components/admin/AdminServiceRequests';
+import { AdminAnalytics } from './components/admin/AdminAnalytics';
+import { AdminSettings } from './components/admin/AdminSettings';
 
 export default function App() {
   return (
@@ -68,6 +80,7 @@ export default function App() {
           <Route path="/business/:businessId/manage" element={<BusinessManagement />} />
           <Route path="/business/:businessId/products" element={<BusinessProducts />} />
           <Route path="/business/:businessId/offers" element={<BusinessOffers />} />
+          <Route path="/business/:businessId/customer/:customerId" element={<Customer360Profile />} />
           <Route path="/business/:businessId/customer/:customerId/history" element={<CustomerTransactionHistory />} />
           <Route path="/business/:businessId/customer/:customerId/chat" element={<CustomerChat />} />
           
@@ -76,6 +89,17 @@ export default function App() {
           
           {/* Notifications */}
           <Route path="/notifications" element={<NotificationsScreen />} />
+          
+          {/* Admin Routes */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/businesses" element={<AdminBusinesses />} />
+          <Route path="/admin/packages" element={<AdminPackages />} />
+          <Route path="/admin/service-requests" element={<AdminServiceRequests />} />
+          <Route path="/admin/analytics" element={<AdminAnalytics />} />
+          <Route path="/admin/settings" element={<AdminSettings />} />
           
           {/* Default Redirect */}
           <Route path="/" element={<Navigate to="/welcome" replace />} />

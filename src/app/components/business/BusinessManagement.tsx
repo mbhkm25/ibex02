@@ -26,7 +26,11 @@ import {
   Tag,
   Star,
   MessageCircle,
-  MoreVertical
+  MoreVertical,
+  ArrowUp,
+  X,
+  Info,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
@@ -57,10 +61,31 @@ interface BankAccount {
   notes: string;
 }
 
+interface DepositRequest {
+  id: string;
+  customerId: string;
+  customerName: string;
+  customerPhone: string;
+  bankId: string;
+  bankName: string;
+  accountNumber: string;
+  referenceNumber: string;
+  amount: number;
+  currency: 'SAR' | 'YER' | 'USD';
+  receiptUrl?: string;
+  receiptType?: 'pdf' | 'image';
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+}
+
 export function BusinessManagement() {
   const navigate = useNavigate();
   const { businessId } = useParams();
-  const [activeSection, setActiveSection] = useState<'overview' | 'customers' | 'orders' | 'cashier' | 'currency' | 'bank' | 'subscription'>('overview');
+  const [activeSection, setActiveSection] = useState<'overview' | 'customers' | 'orders' | 'cashier' | 'currency' | 'bank' | 'subscription' | 'deposits'>('overview');
+  const [selectedDepositRequest, setSelectedDepositRequest] = useState<DepositRequest | null>(null);
+  const [showDepositDetails, setShowDepositDetails] = useState(false);
   const [showAddBankAccount, setShowAddBankAccount] = useState(false);
   const [newBankAccount, setNewBankAccount] = useState({ bankName: '', accountNumber: '', notes: '' });
   const [copiedAccountId, setCopiedAccountId] = useState<string | null>(null);
@@ -97,6 +122,42 @@ export function BusinessManagement() {
     { id: '#1235', customer: 'فاطمة علي', date: 'أمس، 7:15 م', amount: 180, status: 'قيد التنفيذ' },
     { id: '#1236', customer: 'خالد سعيد', date: '13 يناير', amount: 320, status: 'مكتمل' },
   ];
+
+  // Mock data - Deposit Requests
+  const depositRequests: DepositRequest[] = [
+    {
+      id: 'dep-1',
+      customerId: '1',
+      customerName: 'أحمد محمد',
+      customerPhone: '+966501234567',
+      bankId: '1',
+      bankName: 'البنك الأهلي',
+      accountNumber: 'SA1234567890123456789012',
+      referenceNumber: 'REF123456789',
+      amount: 500,
+      currency: 'SAR',
+      receiptUrl: null,
+      status: 'pending',
+      createdAt: 'اليوم، 10:30 ص'
+    },
+    {
+      id: 'dep-2',
+      customerId: '2',
+      customerName: 'فاطمة علي',
+      customerPhone: '+966507654321',
+      bankId: '2',
+      bankName: 'STC Pay',
+      accountNumber: '0501234567',
+      referenceNumber: 'REF987654321',
+      amount: 300,
+      currency: 'SAR',
+      receiptUrl: null,
+      status: 'pending',
+      createdAt: 'أمس، 3:45 م'
+    },
+  ];
+
+  const pendingDeposits = depositRequests.filter(d => d.status === 'pending');
 
   const totalDebt = customers.filter(c => c.balance > 0).reduce((sum, c) => sum + c.balance, 0);
   const totalCredit = customers.filter(c => c.balance < 0).reduce((sum, c) => sum + Math.abs(c.balance), 0);
@@ -148,6 +209,33 @@ export function BusinessManagement() {
     setCopiedAccountId(accountId);
     toast.success('تم نسخ رقم الحساب');
     setTimeout(() => setCopiedAccountId(null), 2000);
+  };
+
+  const handleApproveDeposit = (requestId: string) => {
+    const request = depositRequests.find(r => r.id === requestId);
+    if (!request) return;
+    
+    toast.success(`تم اعتماد إضافة رصيد بقيمة ${request.amount} ${request.currency === 'SAR' ? 'ر.س' : request.currency === 'YER' ? 'ر.ي' : '$'} للعميل ${request.customerName}`);
+    setShowDepositDetails(false);
+    setSelectedDepositRequest(null);
+  };
+
+  const handleRejectDeposit = (requestId: string) => {
+    const request = depositRequests.find(r => r.id === requestId);
+    if (!request) return;
+    
+    toast.info(`تم رفض طلب إضافة الرصيد للعميل ${request.customerName}`);
+    setShowDepositDetails(false);
+    setSelectedDepositRequest(null);
+  };
+
+  const getCurrencySymbol = (currency: string) => {
+    switch (currency) {
+      case 'SAR': return 'ر.س';
+      case 'YER': return 'ر.ي';
+      case 'USD': return '$';
+      default: return 'ر.س';
+    }
   };
 
   return (
@@ -300,6 +388,22 @@ export function BusinessManagement() {
                 </div>
                 <ChevronLeft className="w-4 h-4 text-gray-400" />
               </Button>
+              <Button
+                onClick={() => setActiveSection('deposits')}
+                className="w-full h-11 bg-white border-2 border-gray-200 rounded-xl justify-start font-bold text-sm hover:bg-gray-50 py-2 relative"
+              >
+                <ArrowUp className="w-4 h-4 ml-2 text-gray-700" />
+                <div className="flex-1 text-right">
+                  <div className="text-gray-900 text-sm">طلبات الإيداع</div>
+                  <div className="text-[10px] text-gray-500 font-normal">{pendingDeposits.length} طلب قيد المراجعة</div>
+                </div>
+                {pendingDeposits.length > 0 && (
+                  <Badge className="absolute left-2 top-2 bg-red-500 text-white text-[9px] px-1.5 py-0 h-4 min-w-4 flex items-center justify-center font-black">
+                    {pendingDeposits.length}
+                  </Badge>
+                )}
+                <ChevronLeft className="w-4 h-4 text-gray-400" />
+              </Button>
             </div>
           </div>
         )}
@@ -365,14 +469,53 @@ export function BusinessManagement() {
                         </div>
                       )}
                     </div>
+                    
+                    {/* Pending Deposit Request Notification */}
+                    {depositRequests.filter(d => d.customerId === customer.id && d.status === 'pending').length > 0 && (
+                      <div className="mt-3 p-2 bg-amber-50 rounded-lg border border-amber-200">
+                        <div className="flex items-center gap-2">
+                          <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                          <div className="flex-1">
+                            <p className="text-xs font-bold text-amber-900">
+                              طلب إيداع قيد المراجعة
+                            </p>
+                            <p className="text-[10px] text-amber-700">
+                              {depositRequests.filter(d => d.customerId === customer.id && d.status === 'pending').length} طلب يحتاج للمراجعة
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setActiveSection('deposits');
+                              const pendingRequest = depositRequests.find(d => d.customerId === customer.id && d.status === 'pending');
+                              if (pendingRequest) {
+                                setSelectedDepositRequest(pendingRequest);
+                                setShowDepositDetails(true);
+                              }
+                            }}
+                            className="h-7 px-2 text-xs font-bold text-amber-700 hover:bg-amber-100"
+                          >
+                            مراجعة
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* الطبقة الثالثة: الإجراءات */}
                   <div className="space-y-2">
                     {/* Primary Action */}
                     <Button
-                      onClick={() => handleCustomerAction(customer.id, 'كشف حساب')}
+                      onClick={() => navigate(`/business/${businessId}/customer/${customer.id}`)}
                       className="w-full h-11 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-bold text-sm shadow-sm"
+                    >
+                      ملف العميل
+                    </Button>
+                    <Button
+                      onClick={() => handleCustomerAction(customer.id, 'كشف حساب')}
+                      variant="outline"
+                      className="w-full h-10 border-2 border-gray-200 rounded-xl font-bold text-xs"
                     >
                       كشف حساب
                     </Button>
@@ -382,10 +525,28 @@ export function BusinessManagement() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleCustomerAction(customer.id, 'اعتماد رصيد')}
-                        className="flex-1 h-10 text-xs font-bold rounded-xl border-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+                        onClick={() => {
+                          const pendingRequest = depositRequests.find(d => d.customerId === customer.id && d.status === 'pending');
+                          if (pendingRequest) {
+                            setSelectedDepositRequest(pendingRequest);
+                            setShowDepositDetails(true);
+                          } else {
+                            handleCustomerAction(customer.id, 'اعتماد رصيد');
+                          }
+                        }}
+                        className="flex-1 h-10 text-xs font-bold rounded-xl border-2 border-blue-200 text-blue-700 hover:bg-blue-50 relative"
                       >
-                        اعتماد رصيد
+                        {depositRequests.filter(d => d.customerId === customer.id && d.status === 'pending').length > 0 ? (
+                          <>
+                            <AlertCircle className="w-3.5 h-3.5 ml-1.5" />
+                            مراجعة طلب
+                            <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] px-1 h-3 min-w-3 flex items-center justify-center font-black">
+                              {depositRequests.filter(d => d.customerId === customer.id && d.status === 'pending').length}
+                            </Badge>
+                          </>
+                        ) : (
+                          'اعتماد رصيد'
+                        )}
                       </Button>
                       <Button
                         size="sm"
@@ -835,6 +996,121 @@ export function BusinessManagement() {
           />
         </>
       )}
+
+      {/* Deposit Request Details Dialog */}
+      <Dialog open={showDepositDetails} onOpenChange={setShowDepositDetails}>
+        <DialogContent className="max-w-sm rounded-2xl border-0 shadow-xl max-h-[90vh] overflow-y-auto" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-black">تفاصيل طلب إضافة الرصيد</DialogTitle>
+            <DialogDescription className="text-right text-sm text-gray-600">
+              مراجعة تفاصيل العملية قبل الاعتماد
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedDepositRequest && (
+            <div className="space-y-4 py-4">
+              {/* Customer Info */}
+              <Card className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">العميل:</span>
+                    <span className="font-black text-gray-900">{selectedDepositRequest.customerName}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">الهاتف:</span>
+                    <span className="font-bold text-gray-900">{selectedDepositRequest.customerPhone}</span>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Deposit Details */}
+              <Card className="p-3 bg-blue-50 rounded-xl border border-blue-200">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-blue-700 font-bold">المبلغ</span>
+                    <span className="text-lg font-black text-blue-900">
+                      {selectedDepositRequest.amount.toLocaleString()} {getCurrencySymbol(selectedDepositRequest.currency)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-blue-600">المصرف:</span>
+                    <span className="font-bold text-blue-900">{selectedDepositRequest.bankName}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-blue-600">رقم الحساب:</span>
+                    <span className="font-mono text-blue-900">{selectedDepositRequest.accountNumber}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-blue-600">الرقم المرجعي:</span>
+                    <span className="font-mono font-bold text-blue-900">{selectedDepositRequest.referenceNumber}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-blue-600">تاريخ الطلب:</span>
+                    <span className="font-bold text-blue-900">{selectedDepositRequest.createdAt}</span>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Receipt */}
+              {selectedDepositRequest.receiptUrl && (
+                <div>
+                  <Label className="text-sm font-bold text-gray-700 mb-2 block">إيصال الإيداع</Label>
+                  <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-gray-600" />
+                      <span className="text-sm font-bold text-gray-900">إيصال مرفق</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 w-full h-9 text-xs"
+                      onClick={() => window.open(selectedDepositRequest.receiptUrl, '_blank')}
+                    >
+                      <FileText className="w-3 h-3 ml-1.5" />
+                      عرض الإيصال
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Info Message */}
+              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200">
+                <div className="flex items-start gap-2 text-xs text-amber-700">
+                  <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>يرجى المطابقة مع العمليات في حسابك البنكي قبل الاعتماد</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex-col gap-2">
+            <div className="grid grid-cols-2 gap-2 w-full">
+              <Button
+                onClick={() => selectedDepositRequest && handleApproveDeposit(selectedDepositRequest.id)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-12 font-black text-sm"
+              >
+                <CheckCircle className="w-4 h-4 ml-1.5" />
+                اعتماد
+              </Button>
+              <Button
+                onClick={() => selectedDepositRequest && handleRejectDeposit(selectedDepositRequest.id)}
+                variant="outline"
+                className="border-2 border-red-200 text-red-700 hover:bg-red-50 rounded-xl h-12 font-black text-sm"
+              >
+                <X className="w-4 h-4 ml-1.5" />
+                رفض
+              </Button>
+            </div>
+            <Button
+              variant="ghost"
+              onClick={() => setShowDepositDetails(false)}
+              className="w-full rounded-xl h-10 text-sm"
+            >
+              إلغاء
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

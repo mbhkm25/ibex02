@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wallet, Fingerprint, ScanFace, ArrowRight, ShieldCheck, TrendingUp } from 'lucide-react';
+import { Wallet, Fingerprint, ScanFace, ArrowRight, ShieldCheck, TrendingUp, Shield } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -181,15 +181,27 @@ export function LoginScreen() {
                 </Button>
             </div>
             
-            <div className="mt-6 text-center">
-                <Button 
-                    variant="link" 
-                    className="text-gray-400 hover:text-gray-600 gap-2"
-                    onClick={() => navigate('/')}
-                >
-                    <ArrowRight className="w-4 h-4" />
-                    عودة للرئيسية
-                </Button>
+            <div className="mt-6 space-y-3">
+                <div className="text-center">
+                    <Button 
+                        variant="link" 
+                        className="text-gray-400 hover:text-gray-600 gap-2"
+                        onClick={() => navigate('/')}
+                    >
+                        <ArrowRight className="w-4 h-4" />
+                        عودة للرئيسية
+                    </Button>
+                </div>
+                <div className="pt-4 border-t border-gray-100">
+                    <Button
+                        variant="ghost"
+                        className="w-full text-xs text-gray-500 hover:text-gray-700 gap-2"
+                        onClick={() => navigate('/admin/login')}
+                    >
+                        <Shield className="w-3 h-3" />
+                        تسجيل دخول المدير
+                    </Button>
+                </div>
             </div>
          </div>
       </div>
