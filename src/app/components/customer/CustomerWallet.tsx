@@ -227,39 +227,44 @@ export function CustomerWallet() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold text-gray-900">سجل العمليات</h3>
-            <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-gray-600 hover:text-gray-900"
+              onClick={() => navigate(`/wallet/${storeId}/history`)}
+            >
               عرض الكل
             </Button>
           </div>
 
           <div className="space-y-2">
-            {transactions.map((transaction) => {
+            {transactions.slice(0, 3).map((transaction) => {
               const Icon = transaction.icon;
               const isPositive = transaction.amount > 0;
               
               return (
                 <Card 
                   key={transaction.id} 
-                  className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer bg-white"
-                  onClick={() => toast.info('تفاصيل العملية قريباً')}
+                  className="p-3 border border-gray-200 rounded-xl hover:border-gray-300 transition-colors cursor-pointer bg-white"
+                  onClick={() => navigate(`/wallet/${storeId}/history`)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
                         isPositive 
-                          ? 'bg-green-50 text-green-600' 
-                          : 'bg-red-50 text-red-600'
+                          ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
+                          : 'bg-red-50 text-red-600 border-red-200'
                       }`}>
-                        <Icon className="w-5 h-5" />
+                        <Icon className="w-4 h-4" />
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900 text-sm">{transaction.note}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{transaction.date}</p>
+                        <p className="font-black text-sm text-gray-900 leading-tight">{transaction.note}</p>
+                        <p className="text-[10px] text-gray-500 mt-0.5">{transaction.date}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className={`font-bold text-base ${
-                        isPositive ? 'text-green-600' : 'text-red-600'
+                      <div className={`font-black text-base leading-none ${
+                        isPositive ? 'text-emerald-600' : 'text-red-600'
                       }`}>
                         {isPositive ? '+' : ''}{transaction.amount} <span className="text-xs text-gray-500">ر.س</span>
                       </div>

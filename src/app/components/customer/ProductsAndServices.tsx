@@ -166,21 +166,39 @@ export function ProductsAndServices() {
     }, 1500);
   };
 
+  const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
   return (
     <DashboardLayout 
       title="المنتجات والخدمات" 
       subtitle={`تصفح واطلب من ${storeData.name}`}
     >
       <div className="space-y-6">
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <Input
-            placeholder="ابحث عن منتج أو خدمة..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pr-10 rounded-lg border-gray-200"
-          />
+        {/* Header with Cart Button */}
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Input
+              placeholder="ابحث عن منتج أو خدمة..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pr-10 rounded-lg border-gray-200"
+            />
+          </div>
+          {cart.length > 0 && (
+            <Button
+              onClick={() => setShowCart(true)}
+              className="relative bg-gray-900 hover:bg-gray-800 text-white rounded-lg h-11 px-4 shadow-md"
+            >
+              <ShoppingCart className="w-5 h-5 ml-2" />
+              <span className="font-bold">السلة</span>
+              {cartItemsCount > 0 && (
+                <span className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 rounded-full text-xs flex items-center justify-center text-white font-black">
+                  {cartItemsCount}
+                </span>
+              )}
+            </Button>
+          )}
         </div>
 
         {/* Products Grid */}
@@ -243,28 +261,26 @@ export function ProductsAndServices() {
           </div>
         )}
 
-        {/* Floating Cart Button */}
+        {/* Floating Cart Button - Mobile */}
         {cart.length > 0 && (
-          <div className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:w-80 z-50">
+          <div className="fixed bottom-6 left-6 right-6 z-50 md:hidden">
             <Button
               onClick={() => setShowCart(true)}
-              className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-lg h-14 shadow-lg flex items-center justify-between px-6"
+              className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-xl h-14 shadow-xl flex items-center justify-between px-6"
             >
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <ShoppingCart className="w-5 h-5" />
-                  {cart.length > 0 && (
-                    <span className="absolute -top-2 -right-2 w-5 h-5 bg-primary rounded-full text-xs flex items-center justify-center text-white">
-                      {cart.reduce((sum, item) => sum + item.quantity, 0)}
-                    </span>
-                  )}
+                  <span className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 rounded-full text-xs flex items-center justify-center text-white font-black">
+                    {cartItemsCount}
+                  </span>
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-gray-300">إجمالي السلة</p>
-                  <p className="font-bold">{getTotal()} ر.س</p>
+                  <p className="font-black text-base">{getTotal()} ر.س</p>
                 </div>
               </div>
-              <span className="text-sm font-medium">عرض السلة</span>
+              <span className="text-sm font-bold">عرض السلة</span>
             </Button>
           </div>
         )}
@@ -272,89 +288,104 @@ export function ProductsAndServices() {
 
       {/* Cart Sidebar */}
       <Dialog open={showCart} onOpenChange={setShowCart}>
-        <DialogContent className="max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-md rounded-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">سلة الطلبات</DialogTitle>
-            <DialogDescription>
-              راجع طلبك قبل الإتمام
+            <DialogTitle className="text-xl font-black flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5 text-gray-700" />
+              سلة الطلبات
+            </DialogTitle>
+            <DialogDescription className="text-right">
+              راجع طلبك قبل الإتمام ({cartItemsCount} {cartItemsCount === 1 ? 'عنصر' : 'عناصر'})
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3 py-4">
             {cart.length === 0 ? (
-              <div className="text-center py-8">
-                <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">السلة فارغة</p>
+              <div className="text-center py-12">
+                <ShoppingCart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 font-medium">السلة فارغة</p>
+                <p className="text-xs text-gray-400 mt-2">ابدأ بإضافة المنتجات إلى السلة</p>
               </div>
             ) : (
-              cart.map((item) => (
-                <Card key={item.id} className="p-4 border border-gray-200 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center shrink-0">
-                      {item.category === 'product' ? (
-                        <Package className="w-6 h-6 text-gray-400" />
-                      ) : (
-                        <Wrench className="w-6 h-6 text-gray-400" />
-                      )}
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h4 className="font-semibold text-sm text-gray-900">{item.name}</h4>
-                          <p className="text-xs text-gray-500">{item.price} ر.س</p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-gray-400 hover:text-red-600"
-                          onClick={() => removeFromCart(item.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+              <div className="space-y-3">
+                {cart.map((item) => (
+                  <Card key={item.id} className="p-3 border border-gray-200 rounded-xl hover:border-gray-300 transition-colors bg-white">
+                    <div className="flex items-start gap-3">
+                      <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center shrink-0">
+                        {item.category === 'product' ? (
+                          <Package className="w-7 h-7 text-gray-600" />
+                        ) : (
+                          <Wrench className="w-7 h-7 text-gray-600" />
+                        )}
                       </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 border border-gray-200 rounded-lg">
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-black text-sm text-gray-900 mb-0.5">{item.name}</h4>
+                            <p className="text-xs text-gray-500">{item.price} ر.س للوحدة</p>
+                          </div>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
-                            onClick={() => updateQuantity(item.id, -1)}
+                            className="h-7 w-7 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg shrink-0"
+                            onClick={() => removeFromCart(item.id)}
                           >
-                            <Minus className="w-4 h-4" />
-                          </Button>
-                          <span className="w-8 text-center font-semibold text-sm">{item.quantity}</span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => updateQuantity(item.id, 1)}
-                          >
-                            <Plus className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
-                        <span className="font-bold text-gray-900">
-                          {item.price * item.quantity} ر.س
-                        </span>
+                        <div className="flex items-center justify-between pt-1 border-t border-gray-100">
+                          <div className="flex items-center gap-2 border-2 border-gray-200 rounded-xl">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 rounded-lg hover:bg-gray-100"
+                              onClick={() => updateQuantity(item.id, -1)}
+                            >
+                              <Minus className="w-4 h-4" />
+                            </Button>
+                            <span className="w-10 text-center font-black text-sm text-gray-900">{item.quantity}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 rounded-lg hover:bg-gray-100"
+                              onClick={() => updateQuantity(item.id, 1)}
+                            >
+                              <Plus className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <div className="text-left">
+                            <span className="font-black text-base text-gray-900">
+                              {item.price * item.quantity} ر.س
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Card>
-              ))
+                  </Card>
+                ))}
+              </div>
             )}
           </div>
 
           {cart.length > 0 && (
-            <DialogFooter className="flex-col gap-3 pt-4 border-t">
-              <div className="flex items-center justify-between w-full">
-                <span className="font-semibold text-gray-700">الإجمالي:</span>
-                <span className="font-bold text-xl text-gray-900">{getTotal()} ر.س</span>
+            <DialogFooter className="flex-col gap-3 pt-4 border-t border-gray-200">
+              <div className="flex items-center justify-between w-full p-3 bg-gray-50 rounded-xl">
+                <span className="font-bold text-base text-gray-700">الإجمالي:</span>
+                <span className="font-black text-2xl text-gray-900">{getTotal()} ر.س</span>
               </div>
               <Button
                 onClick={handleCheckout}
-                className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-lg h-12"
+                className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-xl h-12 font-black text-base shadow-md"
               >
                 <CreditCard className="w-5 h-5 ml-2" />
                 إتمام الطلب والدفع
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setShowCart(false)}
+                className="w-full rounded-xl h-10 text-sm"
+              >
+                متابعة التسوق
               </Button>
             </DialogFooter>
           )}

@@ -18,12 +18,14 @@ import { CustomerWallet } from './components/customer/CustomerWallet';
 import { ExploreBusiness } from './components/customer/ExploreBusiness';
 import { MySubscriptions } from './components/customer/MySubscriptions';
 import { ProductsAndServices } from './components/customer/ProductsAndServices';
+import { TransactionHistory } from './components/customer/TransactionHistory';
 
 // Business Pages
 import { BusinessServiceRequest } from './components/business/BusinessServiceRequest';
 import { MyBusinesses } from './components/business/MyBusinesses';
 import { BusinessManagement } from './components/business/BusinessManagement';
 import { BusinessProducts } from './components/business/BusinessProducts';
+import { BusinessOffers } from './components/business/BusinessOffers';
 import { CustomerTransactionHistory } from './components/business/CustomerTransactionHistory';
 import { CustomerChat } from './components/business/CustomerChat';
 
@@ -56,6 +58,7 @@ export default function App() {
           <Route path="/scan/pay" element={<PaymentQRScanner />} />
           <Route path="/wallet/:storeId" element={<CustomerWallet />} />
           <Route path="/wallet/:storeId/products" element={<ProductsAndServices />} />
+          <Route path="/wallet/:storeId/history" element={<TransactionHistory />} />
           <Route path="/explore" element={<ExploreBusiness />} />
           <Route path="/subscriptions" element={<MySubscriptions />} />
           
@@ -64,6 +67,7 @@ export default function App() {
           <Route path="/business/request" element={<BusinessServiceRequest />} />
           <Route path="/business/:businessId/manage" element={<BusinessManagement />} />
           <Route path="/business/:businessId/products" element={<BusinessProducts />} />
+          <Route path="/business/:businessId/offers" element={<BusinessOffers />} />
           <Route path="/business/:businessId/customer/:customerId/history" element={<CustomerTransactionHistory />} />
           <Route path="/business/:businessId/customer/:customerId/chat" element={<CustomerChat />} />
           

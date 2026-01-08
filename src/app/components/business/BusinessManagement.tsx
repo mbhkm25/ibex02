@@ -224,7 +224,7 @@ export function BusinessManagement() {
                 <ChevronLeft className="w-4 h-4 text-gray-400" />
               </Button>
               <Button
-                onClick={() => toast.info('قريباً')}
+                onClick={() => navigate(`/business/${businessId}/offers`)}
                 className="w-full h-11 bg-white border-2 border-gray-200 rounded-xl justify-start font-bold text-sm hover:bg-gray-50 py-2"
               >
                 <Megaphone className="w-4 h-4 ml-2 text-gray-700" />
