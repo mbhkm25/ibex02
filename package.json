@@ -5,7 +5,12 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "db:init": "psql \"$DATABASE_URL\" -f database/schema.sql && psql \"$DATABASE_URL\" -f database/seed.sql",
+    "db:schema": "psql \"$DATABASE_URL\" -f database/schema.sql",
+    "db:seed": "psql \"$DATABASE_URL\" -f database/seed.sql",
+    "db:verify": "psql \"$DATABASE_URL\" -f database/test-connection.sql",
+    "db:test": "psql \"$DATABASE_URL\" -f database/test-connection.sql"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
@@ -39,6 +44,7 @@
     "@radix-ui/react-toggle": "1.1.2",
     "@radix-ui/react-toggle-group": "1.1.2",
     "@radix-ui/react-tooltip": "1.1.8",
+    "@vercel/node": "^3.0.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "cmdk": "1.1.1",
@@ -48,6 +54,7 @@
     "lucide-react": "0.487.0",
     "motion": "12.23.24",
     "next-themes": "0.4.6",
+    "pg": "^8.11.3",
     "react-day-picker": "8.10.1",
     "react-dnd": "16.0.1",
     "react-dnd-html5-backend": "16.0.1",
@@ -65,6 +72,8 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.1.12",
+    "@types/node": "^20.19.27",
+    "@types/pg": "^8.16.0",
     "@vitejs/plugin-react": "4.7.0",
     "tailwindcss": "4.1.12",
     "vite": "6.3.5",

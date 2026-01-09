@@ -24,6 +24,7 @@ import { TransactionHistory } from './components/customer/TransactionHistory';
 // Business Pages
 import { BusinessServiceRequest } from './components/business/BusinessServiceRequest';
 import { MyBusinesses } from './components/business/MyBusinesses';
+import { MyServiceRequests } from './components/business/MyServiceRequests';
 import { BusinessManagement } from './components/business/BusinessManagement';
 import { BusinessProducts } from './components/business/BusinessProducts';
 import { BusinessOffers } from './components/business/BusinessOffers';
@@ -77,6 +78,7 @@ export default function App() {
           {/* Business Routes */}
           <Route path="/business" element={<MyBusinesses />} />
           <Route path="/business/request" element={<BusinessServiceRequest />} />
+          <Route path="/business/requests" element={<MyServiceRequests />} />
           <Route path="/business/:businessId/manage" element={<BusinessManagement />} />
           <Route path="/business/:businessId/products" element={<BusinessProducts />} />
           <Route path="/business/:businessId/offers" element={<BusinessOffers />} />
