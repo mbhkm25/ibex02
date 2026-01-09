@@ -14,9 +14,24 @@ export function LoginScreen() {
   });
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [canInstall, setCanInstall] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   // Capture PWA install event (Web App Install Banner)
   useEffect(() => {
+    // Check if app is already installed
+    const checkStandalone = () => {
+      const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches ||
+                               (window.navigator as any).standalone === true ||
+                               document.referrer.includes('android-app://');
+      setIsStandalone(isStandaloneMode);
+      return isStandaloneMode;
+    };
+
+    if (checkStandalone()) {
+      setCanInstall(false);
+      return;
+    }
+
     const handler = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -25,20 +40,44 @@ export function LoginScreen() {
 
     window.addEventListener('beforeinstallprompt', handler);
 
+    // For development/testing: Show install button if we're on localhost or HTTPS
+    // In production, this will work with beforeinstallprompt
+    const checkPWAReady = async () => {
+      const isSecure = window.location.protocol === 'https:' || 
+                       window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1';
+      
+      if (isSecure && !checkStandalone()) {
+        // Show install button after a short delay to allow service worker registration
+        setTimeout(() => {
+          setCanInstall(true);
+        }, 1000);
+      }
+    };
+
+    checkPWAReady();
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handler);
     };
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      toast.success('تم تثبيت التطبيق بنجاح!');
+    if (deferredPrompt) {
+      // Use the deferred prompt if available
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        toast.success('تم تثبيت التطبيق بنجاح!');
+      }
+      setDeferredPrompt(null);
+      setCanInstall(false);
+    } else {
+      // Fallback: Show instructions for manual installation
+      toast.info('يمكنك تثبيت التطبيق من قائمة المتصفح: القائمة > إضافة إلى الشاشة الرئيسية', {
+        duration: 5000
+      });
     }
-    setDeferredPrompt(null);
-    setCanInstall(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
