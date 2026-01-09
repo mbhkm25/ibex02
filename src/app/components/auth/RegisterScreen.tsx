@@ -26,14 +26,14 @@ export function RegisterScreen() {
   return (
     <div className="min-h-screen bg-[#F8F9FA] p-6 flex flex-col justify-center">
       <div className="max-w-md mx-auto w-full">
-        <Button
+          <Button
             variant="ghost"
             className="mb-6 rounded-full text-gray-500 hover:text-gray-900 gap-2 px-2"
             onClick={() => navigate(-1)}
-        >
+          >
             <ArrowRight className="w-5 h-5" />
             <span>رجوع</span>
-        </Button>
+          </Button>
 
         <div className="mb-8">
             <h1 className="text-2xl font-bold text-gray-900">إنشاء حساب جديد</h1>
@@ -43,8 +43,8 @@ export function RegisterScreen() {
         <Card className="p-8 border-0 shadow-sm rounded-3xl bg-white">
             <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-                <Label htmlFor="fullName">الاسم الكامل</Label>
-                <Input
+              <Label htmlFor="fullName">الاسم الكامل</Label>
+              <Input
                 id="fullName"
                 type="text"
                 value={formData.fullName}
@@ -52,12 +52,12 @@ export function RegisterScreen() {
                 className="mt-2 h-12 rounded-xl bg-gray-50 border-gray-100 focus:bg-white transition-colors"
                 placeholder="أدخل اسمك الكامل"
                 required
-                />
+              />
             </div>
 
             <div>
-                <Label htmlFor="phone">رقم الجوال</Label>
-                <Input
+              <Label htmlFor="phone">رقم الجوال</Label>
+              <Input
                 id="phone"
                 type="tel"
                 dir="ltr"
@@ -66,12 +66,12 @@ export function RegisterScreen() {
                 className="mt-2 h-12 rounded-xl bg-gray-50 border-gray-100 focus:bg-white transition-colors text-right"
                 placeholder="+966 5XXXXXXXX"
                 required
-                />
+              />
             </div>
 
             <div>
-                <Label htmlFor="email">البريد الإلكتروني</Label>
-                <Input
+              <Label htmlFor="email">البريد الإلكتروني</Label>
+              <Input
                 id="email"
                 type="email"
                 dir="ltr"
@@ -80,52 +80,52 @@ export function RegisterScreen() {
                 className="mt-2 h-12 rounded-xl bg-gray-50 border-gray-100 focus:bg-white transition-colors text-right"
                 placeholder="example@email.com"
                 required
-                />
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <Label htmlFor="password">كلمة المرور</Label>
-                    <Input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            <div>
+              <Label htmlFor="password">كلمة المرور</Label>
+              <Input
+                id="password"
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     className="mt-2 h-12 rounded-xl bg-gray-50 border-gray-100 focus:bg-white transition-colors"
-                    placeholder="••••••••"
-                    required
-                    />
-                </div>
-                <div>
-                    <Label htmlFor="confirmPassword">تأكيدها</Label>
-                    <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    className="mt-2 h-12 rounded-xl bg-gray-50 border-gray-100 focus:bg-white transition-colors"
-                    placeholder="••••••••"
-                    required
-                    />
-                </div>
+                placeholder="••••••••"
+                required
+              />
             </div>
+            <div>
+                    <Label htmlFor="confirmPassword">تأكيدها</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    className="mt-2 h-12 rounded-xl bg-gray-50 border-gray-100 focus:bg-white transition-colors"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+          </div>
 
             <Button type="submit" className="w-full h-12 rounded-xl mt-4 text-base bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200">
-                متابعة
-            </Button>
+            متابعة
+          </Button>
             </form>
         </Card>
 
         <p className="text-center mt-6 text-gray-500">
             لديك حساب بالفعل؟{' '}
             <button
-                type="button"
-                onClick={() => navigate('/login')}
+              type="button"
+              onClick={() => navigate('/login')}
                 className="text-blue-600 font-semibold hover:underline"
             >
-                تسجيل الدخول
+              تسجيل الدخول
             </button>
-        </p>
+          </p>
       </div>
     </div>
   );

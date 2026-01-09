@@ -8,12 +8,13 @@ import {
   LogOut,
   Bell,
   Menu,
-  Building2
+  Building2,
+  Download
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface DashboardLayoutProps {
@@ -26,6 +27,33 @@ export function DashboardLayout({ children, title, subtitle }: DashboardLayoutPr
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [canInstall, setCanInstall] = useState(false);
+
+  // Capture PWA install event (Web App Install Banner)
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setCanInstall(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setCanInstall(false);
+      setDeferredPrompt(null);
+    }
+  };
 
   const isActive = (path: string) => {
     if (path === '/scan') {
@@ -131,6 +159,17 @@ export function DashboardLayout({ children, title, subtitle }: DashboardLayoutPr
               </div>
               
               <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end">
+                {canInstall && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleInstallClick}
+                    className="h-9 rounded-full border-2 border-gray-200 text-xs font-bold gap-1 hidden sm:inline-flex"
+                  >
+                    <Download className="w-3.5 h-3.5 ml-1" />
+                    تثبيت التطبيق
+                  </Button>
+                )}
                 <Button variant="ghost" size="icon" className="rounded-full relative text-gray-500 hover:bg-gray-100 hidden sm:flex">
                   <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
                   <span className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-red-500 rounded-full border-2 border-white"></span>
