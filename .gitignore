@@ -69,10 +69,19 @@ typings/
 # Yarn Integrity file
 .yarn-integrity
 
+# ==============================================================================
+# Environment Variables - SECURITY CRITICAL
+# ==============================================================================
+# ⚠️ NEVER commit environment variable files to version control
+# ⚠️ These files contain sensitive secrets and credentials
+# ⚠️ If accidentally committed, immediately rotate all secrets
+#
 # dotenv environment variables file
 .env
 .env.test
 .env.local
+.env.production
+.env.development
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache

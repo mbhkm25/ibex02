@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   Plus,
@@ -84,92 +84,20 @@ export function BusinessOffers() {
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  // Mock data
-  const offers: Offer[] = [
-    {
-      id: '1',
-      title: 'خصم 20% على جميع المنتجات',
-      description: 'عرض خاص لفترة محدودة - خصم 20% على جميع المنتجات',
-      type: 'discount',
-      discountType: 'percentage',
-      discountValue: 20,
-      minPurchase: 100,
-      startDate: '2024-01-15',
-      endDate: '2024-02-15',
-      status: 'active',
-      targetAudience: 'all',
-      views: 1250,
-      clicks: 320,
-      conversions: 85,
-      createdAt: '2024-01-10'
-    },
-    {
-      id: '2',
-      title: 'اشتري واحد واحصل على الثاني مجاناً',
-      description: 'عرض خاص على منتجات مختارة',
-      type: 'bogo',
-      discountType: 'percentage',
-      discountValue: 50,
-      startDate: '2024-01-20',
-      endDate: '2024-02-20',
-      status: 'scheduled',
-      targetAudience: 'vip',
-      views: 0,
-      clicks: 0,
-      conversions: 0,
-      createdAt: '2024-01-18'
-    },
-    {
-      id: '3',
-      title: 'شحن مجاني للطلبات فوق 200 ر.س',
-      description: 'استمتع بشحن مجاني على جميع الطلبات التي تتجاوز 200 ريال',
-      type: 'free_shipping',
-      discountType: 'fixed',
-      discountValue: 0,
-      minPurchase: 200,
-      startDate: '2024-01-01',
-      endDate: '2024-12-31',
-      status: 'active',
-      targetAudience: 'all',
-      views: 2100,
-      clicks: 450,
-      conversions: 120,
-      createdAt: '2023-12-28'
-    },
-    {
-      id: '4',
-      title: 'استرجاع نقدي 5%',
-      description: 'احصل على 5% استرجاع نقدي على مشترياتك',
-      type: 'cashback',
-      discountType: 'percentage',
-      discountValue: 5,
-      startDate: '2024-01-10',
-      endDate: '2024-03-10',
-      status: 'active',
-      targetAudience: 'all',
-      views: 890,
-      clicks: 180,
-      conversions: 45,
-      createdAt: '2024-01-05'
-    },
-    {
-      id: '5',
-      title: 'عرض خاص للعملاء الجدد',
-      description: 'خصم 15% حصري للعملاء الجدد',
-      type: 'discount',
-      discountType: 'percentage',
-      discountValue: 15,
-      minPurchase: 50,
-      startDate: '2024-01-25',
-      endDate: '2024-02-25',
-      status: 'draft',
-      targetAudience: 'new',
-      views: 0,
-      clicks: 0,
-      conversions: 0,
-      createdAt: '2024-01-22'
-    }
-  ];
+  // TODO: Fetch offers from API
+  // This feature requires business activation
+  // All data must come from database via API
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [hasActiveBusiness, setHasActiveBusiness] = useState(false);
+
+  useEffect(() => {
+    // TODO: Check if business is activated and fetch offers
+    // For now, assume no active business
+    setHasActiveBusiness(false);
+    setOffers([]);
+    setLoading(false);
+  }, []);
 
   const filteredOffers = offers.filter(offer => {
     const matchesSearch = offer.title.includes(searchQuery) || offer.description.includes(searchQuery);

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Building2, 
@@ -33,45 +34,31 @@ interface Business {
 export function MyBusinesses() {
   const navigate = useNavigate();
 
-  // Mock data - Approved businesses
-  const businesses: Business[] = [
-    {
-      id: '1',
-      name: 'سوبر ماركت الرحمة',
-      logo: '🏪',
-      status: 'approved',
-      type: 'both',
-      customersCount: 245,
-      ordersCount: 1234,
-      totalBalance: 125000,
-      approvedDate: '15 يناير 2024',
-      revenue: 45000,
-      growth: 12.5
-    },
-    {
-      id: '2',
-      name: 'مطعم البيك',
-      logo: '🍔',
-      status: 'approved',
-      type: 'both',
-      customersCount: 189,
-      ordersCount: 856,
-      totalBalance: 89000,
-      approvedDate: '20 ديسمبر 2023',
-      revenue: 32000,
-      growth: 8.3
-    },
-    {
-      id: '3',
-      name: 'صيدلية النهدي',
-      logo: '💊',
-      status: 'pending',
-      type: 'products',
-      customersCount: 0,
-      ordersCount: 0,
-      totalBalance: 0
-    }
-  ];
+  // State for real data from API
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch user's businesses from API
+  useEffect(() => {
+    const fetchBusinesses = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        // TODO: Create API endpoint /api/businesses
+        // For now, return empty array - businesses come from activated service requests
+        setBusinesses([]);
+      } catch (err: any) {
+        console.error('Failed to fetch businesses:', err);
+        setError(err.message || 'فشل تحميل الأعمال');
+        setBusinesses([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBusinesses();
+  }, []);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -124,11 +111,26 @@ export function MyBusinesses() {
       subtitle="إدارة أعمالك المعتمدة"
     >
       <div className="space-y-3">
-        {businesses.length === 0 ? (
+        {loading ? (
+          <Card className="p-8 border-2 border-gray-200 rounded-xl bg-white text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-3"></div>
+            <h3 className="text-base font-black text-gray-900 mb-1">جاري التحميل...</h3>
+            <p className="text-sm text-gray-600">يرجى الانتظار</p>
+          </Card>
+        ) : error ? (
+          <Card className="p-8 border-2 border-red-200 rounded-xl bg-red-50 text-center">
+            <XCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
+            <h3 className="text-base font-black text-red-900 mb-1">حدث خطأ</h3>
+            <p className="text-sm text-red-600">{error}</p>
+          </Card>
+        ) : businesses.length === 0 ? (
           <Card className="p-8 border-2 border-gray-200 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 text-center">
             <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-3" />
             <h3 className="text-lg font-bold text-gray-900 mb-1">لا توجد أعمال معتمدة</h3>
-            <p className="text-sm text-gray-600 mb-4">ابدأ بطلب خدمة إدارة العملاء</p>
+            <p className="text-sm text-gray-600 mb-4">
+              لم يتم تفعيل أي عمل بعد.<br />
+              ابدأ بطلب خدمة إدارة العملاء وانتظر اعتمادها وتفعيلها.
+            </p>
             <Button
               onClick={() => navigate('/business/request')}
               className="bg-gray-900 hover:bg-gray-800 text-white rounded-lg h-10 px-5 font-bold"

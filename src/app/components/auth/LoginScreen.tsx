@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wallet, Fingerprint, ScanFace, ArrowRight, ShieldCheck, TrendingUp, Shield, Download } from 'lucide-react';
+import { Wallet, Fingerprint, ScanFace, ArrowRight, ShieldCheck, TrendingUp, Shield, Download, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { toast } from 'sonner';
+import { useAuth } from '../../contexts/AuthContext';
 
 export function LoginScreen() {
   const navigate = useNavigate();
+  const { login, isLoading } = useAuth();
   const [formData, setFormData] = useState({
-    phone: '',
+    email: '', // Changed from phone to email for Neon Auth
     password: ''
   });
+  const [error, setError] = useState<string | null>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [canInstall, setCanInstall] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
@@ -80,19 +82,27 @@ export function LoginScreen() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/dashboard');
+    setError(null);
+    
+    if (!formData.email || !formData.password) {
+      setError('يرجى إدخال البريد الإلكتروني وكلمة المرور');
+      return;
+    }
+
+    try {
+      await login(formData.email, formData.password);
+      // Navigation handled by AuthContext
+    } catch (err: any) {
+      setError(err.message || 'فشل تسجيل الدخول. يرجى التحقق من البيانات.');
+    }
   };
 
   const handleBiometricLogin = () => {
-    toast.info('جاري التحقق من البصمة...', {
-        duration: 1500,
-        onAutoClose: () => {
-            toast.success('تم التحقق بنجاح');
-            setTimeout(() => navigate('/dashboard'), 500);
-        }
-    });
+    // TODO: Implement biometric authentication
+    // For now, show message that it's coming soon
+    setError('المصادقة البيومترية قريباً');
   };
 
   return (
@@ -168,18 +178,24 @@ export function LoginScreen() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+                {error && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+                    {error}
+                  </div>
+                )}
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="phone">رقم الجوال</Label>
+                        <Label htmlFor="email">البريد الإلكتروني</Label>
                         <Input
-                            id="phone"
-                            type="tel"
+                            id="email"
+                            type="email"
                             dir="ltr"
-                            value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             className="h-12 lg:h-14 rounded-2xl bg-gray-50 border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all text-right text-lg"
-                            placeholder="+966 5XXXXXXXX"
+                            placeholder="example@email.com"
                             required
+                            disabled={isLoading}
                         />
                     </div>
 
@@ -198,12 +214,24 @@ export function LoginScreen() {
                             className="h-12 lg:h-14 rounded-2xl bg-gray-50 border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all text-lg"
                             placeholder="••••••••"
                             required
+                            disabled={isLoading}
                         />
                     </div>
                 </div>
 
-                <Button type="submit" className="w-full h-12 lg:h-14 rounded-2xl text-base lg:text-lg font-bold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 hover:shadow-xl hover:shadow-blue-300 transition-all transform hover:-translate-y-0.5">
-                    تسجيل الدخول
+                <Button 
+                  type="submit" 
+                  className="w-full h-12 lg:h-14 rounded-2xl text-base lg:text-lg font-bold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 hover:shadow-xl hover:shadow-blue-300 transition-all transform hover:-translate-y-0.5"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 ml-2 animate-spin" />
+                      جاري تسجيل الدخول...
+                    </>
+                  ) : (
+                    'تسجيل الدخول'
+                  )}
                 </Button>
 
                 <div className="relative py-4">

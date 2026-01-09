@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   Edit,
@@ -44,6 +44,7 @@ import { CustomerCategoryDialog } from './CustomerCategoryDialog';
 import { CustomerCreditApprovalDialog } from './CustomerCreditApprovalDialog';
 import { CustomerRatingDialog } from './CustomerRatingDialog';
 import { CustomerSuspendDialog } from './CustomerSuspendDialog';
+import { DashboardLayout } from '../layout/DashboardLayout';
 
 interface Customer {
   id: string;
@@ -98,70 +99,31 @@ export function BusinessManagement() {
   const [showRatingDialog, setShowRatingDialog] = useState(false);
   const [showSuspendDialog, setShowSuspendDialog] = useState(false);
 
-  // Mock data
-  const business = {
-    id: businessId || '1',
-    name: 'سوبر ماركت الرحمة',
-    logo: '🏪'
-  };
+  // TODO: Fetch business profile from API
+  // This feature requires business activation
+  // All data must come from database via API
+  const [business, setBusiness] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [hasActiveBusiness, setHasActiveBusiness] = useState(false);
 
-  const customers: Customer[] = [
-    { id: '1', name: 'أحمد محمد', phone: '+966501234567', balance: 250, creditStatus: 'نقدي', creditLimit: 0 },
-    { id: '2', name: 'فاطمة علي', phone: '+966507654321', balance: -45, creditStatus: 'آجل', creditLimit: 500 },
-    { id: '3', name: 'خالد سعيد', phone: '+966509876543', balance: 180, creditStatus: 'نقدي', creditLimit: 0 },
-    { id: '4', name: 'سارة أحمد', phone: '+966501112233', balance: 320, creditStatus: 'آجل', creditLimit: 1000 },
-  ];
+  // Empty state data - no mock data allowed
+  const customers: Customer[] = [];
+  const bankAccounts: BankAccount[] = [];
+  const orders: any[] = [];
+  const depositRequests: DepositRequest[] = [];
+  const pendingDeposits: DepositRequest[] = [];
+  
+  const totalDebt = 0;
+  const totalCredit = 0;
+  const activeCredit = 0;
 
-  const bankAccounts: BankAccount[] = [
-    { id: '1', bankName: 'البنك الأهلي', accountNumber: 'SA1234567890123456789012', notes: 'الحساب الرئيسي' },
-    { id: '2', bankName: 'STC Pay', accountNumber: '0501234567', notes: 'محفظة إلكترونية' },
-  ];
-
-  const orders = [
-    { id: '#1234', customer: 'أحمد محمد', date: 'اليوم، 2:30 م', amount: 250, status: 'مكتمل' },
-    { id: '#1235', customer: 'فاطمة علي', date: 'أمس، 7:15 م', amount: 180, status: 'قيد التنفيذ' },
-    { id: '#1236', customer: 'خالد سعيد', date: '13 يناير', amount: 320, status: 'مكتمل' },
-  ];
-
-  // Mock data - Deposit Requests
-  const depositRequests: DepositRequest[] = [
-    {
-      id: 'dep-1',
-      customerId: '1',
-      customerName: 'أحمد محمد',
-      customerPhone: '+966501234567',
-      bankId: '1',
-      bankName: 'البنك الأهلي',
-      accountNumber: 'SA1234567890123456789012',
-      referenceNumber: 'REF123456789',
-      amount: 500,
-      currency: 'SAR',
-      receiptUrl: null,
-      status: 'pending',
-      createdAt: 'اليوم، 10:30 ص'
-    },
-    {
-      id: 'dep-2',
-      customerId: '2',
-      customerName: 'فاطمة علي',
-      customerPhone: '+966507654321',
-      bankId: '2',
-      bankName: 'STC Pay',
-      accountNumber: '0501234567',
-      referenceNumber: 'REF987654321',
-      amount: 300,
-      currency: 'SAR',
-      receiptUrl: null,
-      status: 'pending',
-      createdAt: 'أمس، 3:45 م'
-    },
-  ];
-
-  const pendingDeposits = depositRequests.filter(d => d.status === 'pending');
-
-  const totalDebt = customers.filter(c => c.balance > 0).reduce((sum, c) => sum + c.balance, 0);
-  const totalCredit = customers.filter(c => c.balance < 0).reduce((sum, c) => sum + Math.abs(c.balance), 0);
-  const activeCredit = customers.filter(c => c.creditStatus === 'آجل').length;
+  // Check if business is activated
+  useEffect(() => {
+    // TODO: Check if user has activated business
+    // For now, assume no active business
+    setHasActiveBusiness(false);
+    setLoading(false);
+  }, [businessId]);
 
   const handleCustomerAction = (customerId: string, action: string) => {
     const customer = customers.find(c => c.id === customerId);
@@ -238,6 +200,43 @@ export function BusinessManagement() {
     }
   };
 
+  // Show empty state if business is not activated
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-3"></div>
+          <p className="text-sm text-gray-600">جاري التحميل...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasActiveBusiness) {
+    return (
+      <div className="min-h-screen bg-gray-50" dir="rtl">
+        <DashboardLayout title="إدارة العمل">
+          <div className="p-6">
+            <Card className="p-8 border-2 border-gray-200 rounded-xl bg-white text-center">
+              <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h2 className="text-xl font-black text-gray-900 mb-2">العمل غير مفعّل</h2>
+              <p className="text-sm text-gray-600 mb-6">
+                هذه الميزة متاحة فقط بعد تفعيل عملك.<br />
+                يرجى الانتظار حتى يتم اعتماد طلبك وتفعيل العمل من قبل المسؤول.
+              </p>
+              <Button
+                onClick={() => navigate('/business/my-requests')}
+                className="bg-gray-900 hover:bg-gray-800 text-white rounded-xl h-11 px-6 font-black"
+              >
+                عرض طلباتي
+              </Button>
+            </Card>
+          </div>
+        </DashboardLayout>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
       {/* Mobile Header */}
@@ -252,7 +251,7 @@ export function BusinessManagement() {
             <ChevronLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-black text-gray-900 truncate">{business.name}</h1>
+            <h1 className="text-lg font-black text-gray-900 truncate">{business?.name || 'إدارة العمل'}</h1>
             <p className="text-xs text-gray-500">إدارة العمل</p>
           </div>
           <Button

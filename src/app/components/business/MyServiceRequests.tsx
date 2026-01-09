@@ -22,7 +22,7 @@
  * - Low cognitive load
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FileText, 
@@ -46,62 +46,40 @@ import {
 } from '../../utils/serviceRequestStateMachine';
 import { toast } from 'sonner';
 
-// Mock data - In production, this comes from API
-const mockUserRequests: ServiceRequest[] = [
-  {
-    id: '1',
-    userId: 'user-1',
-    requestNumber: 'REQ-2024-001',
-    status: 'submitted',
-    businessName: 'سوبر ماركت النور',
-    contactInfo: '+966501234567',
-    address: 'الرياض، حي النرجس',
-    managerPhone: '+966507654321',
-    email: 'mohammed@example.com',
-    description: 'نريد خدمة إدارة العملاء لإدارة عملائنا وطلباتهم',
-    businessType: 'both',
-    createdAt: '2024-01-20',
-    submittedAt: '2024-01-20'
-  },
-  {
-    id: '2',
-    userId: 'user-1',
-    requestNumber: 'REQ-2024-004',
-    status: 'rejected',
-    businessName: 'محل الأجهزة',
-    contactInfo: '+966504445566',
-    address: 'الرياض، حي العليا',
-    managerPhone: '+966507778899',
-    description: 'نريد خدمة إدارة العملاء',
-    businessType: 'products',
-    createdAt: '2024-01-12',
-    submittedAt: '2024-01-12',
-    reviewedAt: '2024-01-13',
-    rejectionReason: 'المعلومات غير مكتملة. يرجى إضافة المزيد من التفاصيل في الوصف.'
-  },
-  {
-    id: '3',
-    userId: 'user-1',
-    requestNumber: 'REQ-2024-003',
-    status: 'activated',
-    businessName: 'صالون الجمال',
-    contactInfo: '+966505556677',
-    address: 'الدمام، حي الفيصلية',
-    managerPhone: '+966508889900',
-    email: 'sara@example.com',
-    description: 'طلب خدمة إدارة العملاء',
-    businessType: 'services',
-    createdAt: '2024-01-15',
-    submittedAt: '2024-01-15',
-    reviewedAt: '2024-01-16',
-    approvedAt: '2024-01-16',
-    activatedAt: '2024-01-17',
-    businessProfileId: 'business-1'
-  }
-];
+// TODO: Remove mock data - fetch from API
+// All data must come from database via API
 
 export function MyServiceRequests() {
   const navigate = useNavigate();
+  
+  // State for real data from API
+  const [requests, setRequests] = useState<ServiceRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch user's service requests from API
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch('/api/service-requests');
+        if (!response.ok) {
+          throw new Error('Failed to fetch service requests');
+        }
+        const result = await response.json();
+        setRequests(result.data?.requests || []);
+      } catch (err: any) {
+        console.error('Failed to fetch service requests:', err);
+        setError(err.message || 'فشل تحميل طلبات الخدمة');
+        setRequests([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRequests();
+  }, []);
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
@@ -149,7 +127,19 @@ export function MyServiceRequests() {
       subtitle="عرض ومتابعة طلبات خدمة إدارة العملاء"
     >
       <div className="space-y-4">
-        {mockUserRequests.length === 0 ? (
+        {loading ? (
+          <Card className="p-8 border-2 border-gray-200 rounded-xl bg-white text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-3"></div>
+            <h3 className="text-base font-black text-gray-900 mb-1">جاري التحميل...</h3>
+            <p className="text-sm text-gray-600">يرجى الانتظار</p>
+          </Card>
+        ) : error ? (
+          <Card className="p-8 border-2 border-red-200 rounded-xl bg-red-50 text-center">
+            <FileText className="w-12 h-12 text-red-400 mx-auto mb-3" />
+            <h3 className="text-base font-black text-red-900 mb-1">حدث خطأ</h3>
+            <p className="text-sm text-red-600">{error}</p>
+          </Card>
+        ) : requests.length === 0 ? (
           <Card className="p-8 border-2 border-gray-200 rounded-xl bg-white text-center">
             <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
             <h3 className="text-base font-black text-gray-900 mb-1">لا توجد طلبات</h3>
@@ -163,7 +153,7 @@ export function MyServiceRequests() {
           </Card>
         ) : (
           <div className="space-y-3">
-            {mockUserRequests.map((request) => {
+            {requests.map((request) => {
               const statusBadge = getStatusBadge(request.status);
               const StatusIcon = statusBadge.icon;
               const config = getStateConfig(request.status);

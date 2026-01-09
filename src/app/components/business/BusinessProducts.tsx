@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   Plus,
@@ -75,82 +75,20 @@ export function BusinessProducts() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  // Mock data - Categories
-  const categories: ProductCategory[] = [
-    {
-      id: 'cat-1',
-      name: 'الحلويات',
-      products: [
-        {
-          id: '1',
-          name: 'كنافة',
-          description: 'كنافة نابلسية طازجة',
-          price: 35,
-          category: 'product',
-          categoryId: 'cat-1',
-          inStock: true,
-          active: true,
-          createdAt: '2024-01-15'
-        },
-        {
-          id: '2',
-          name: 'بقلاوة',
-          description: 'بقلاوة عسلية',
-          price: 45,
-          category: 'product',
-          categoryId: 'cat-1',
-          inStock: true,
-          active: true,
-          createdAt: '2024-01-14'
-        }
-      ]
-    },
-    {
-      id: 'cat-2',
-      name: 'مواد غذائية',
-      products: [
-        {
-          id: '3',
-          name: 'أرز بسمتي',
-          description: 'أرز بسمتي عالي الجودة 5 كيلو',
-          price: 45,
-          category: 'product',
-          categoryId: 'cat-2',
-          inStock: true,
-          active: true,
-          createdAt: '2024-01-15'
-        },
-        {
-          id: '4',
-          name: 'زيت عباد الشمس',
-          description: 'زيت عباد الشمس 5 لتر',
-          price: 35,
-          category: 'product',
-          categoryId: 'cat-2',
-          inStock: false,
-          active: true,
-          createdAt: '2024-01-14'
-        }
-      ]
-    },
-    {
-      id: 'cat-3',
-      name: 'خدمات',
-      products: [
-        {
-          id: '5',
-          name: 'خدمة توصيل',
-          description: 'توصيل الطلبات للمنزل',
-          price: 15,
-          category: 'service',
-          categoryId: 'cat-3',
-          inStock: true,
-          active: false,
-          createdAt: '2024-01-13'
-        }
-      ]
-    }
-  ];
+  // TODO: Fetch products from API
+  // This feature requires business activation
+  // All data must come from database via API
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [hasActiveBusiness, setHasActiveBusiness] = useState(false);
+
+  useEffect(() => {
+    // TODO: Check if business is activated and fetch products
+    // For now, assume no active business
+    setHasActiveBusiness(false);
+    setCategories([]);
+    setLoading(false);
+  }, []);
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showProductActions, setShowProductActions] = useState<string | null>(null);
@@ -292,6 +230,57 @@ export function BusinessProducts() {
     setNewCategoryName('');
     setShowCategoryDialog(false);
   };
+
+  // Show empty state if business is not activated
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-3"></div>
+          <p className="text-sm text-gray-600">جاري التحميل...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasActiveBusiness) {
+    return (
+      <div className="min-h-screen bg-gray-50" dir="rtl">
+        <header className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm">
+          <div className="flex items-center gap-3 p-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(`/business/${businessId}/manage`)}
+              className="h-9 w-9 rounded-xl"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg font-black text-gray-900 truncate">المنتجات والخدمات</h1>
+              <p className="text-xs text-gray-500">إدارة منتجاتك وخدماتك</p>
+            </div>
+          </div>
+        </header>
+        <main className="p-6">
+          <Card className="p-8 border-2 border-gray-200 rounded-xl bg-white text-center">
+            <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-xl font-black text-gray-900 mb-2">العمل غير مفعّل</h2>
+            <p className="text-sm text-gray-600 mb-6">
+              هذه الميزة متاحة فقط بعد تفعيل عملك.<br />
+              يرجى الانتظار حتى يتم اعتماد طلبك وتفعيل العمل من قبل المسؤول.
+            </p>
+            <Button
+              onClick={() => navigate('/business/my-requests')}
+              className="bg-gray-900 hover:bg-gray-800 text-white rounded-xl h-11 px-6 font-black"
+            >
+              عرض طلباتي
+            </Button>
+          </Card>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">

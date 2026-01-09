@@ -1,16 +1,18 @@
 /**
- * Admin Configuration (MVP)
+ * Admin Configuration
  * 
- * ⚠️ TEMPORARY MVP SECURITY ⚠️
+ * ⚠️ DEPRECATED: This file is kept for backward compatibility only ⚠️
  * 
- * This is a simple admin secret for MVP protection.
- * This is NOT production-grade authentication.
+ * The system now uses Neon Auth with JWT tokens for authentication.
+ * Admin access is determined by the 'admin' role in the JWT token.
  * 
- * TODO: Replace ADMIN_SECRET with real authentication system
- * TODO: Replace header-based auth with role-based access control (RBAC)
- * TODO: Implement JWT tokens with proper expiration
- * TODO: Add session management
- * TODO: Implement proper admin role verification
+ * Migration Status:
+ * - ✅ Frontend: Uses JWT from auth service
+ * - ✅ Backend: Verifies JWT using Neon Auth JWKS
+ * - ⚠️ Legacy: Admin secret still supported for backward compatibility
+ * 
+ * TODO: Remove this file once all clients are migrated to JWT
+ * TODO: Remove ADMIN_SECRET environment variable
  * 
  * Architecture Decision:
  * - For MVP, we use a simple secret stored in environment variable

@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import { AuthProvider } from './contexts/AuthContext';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 // Auth Pages
 import { WelcomeScreen } from './components/auth/WelcomeScreen';
@@ -51,8 +53,9 @@ import { AdminSettings } from './components/admin/AdminSettings';
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-background">
-        <Routes>
+      <AuthProvider>
+        <div className="min-h-screen bg-background">
+          <Routes>
           {/* Auth Routes */}
           <Route path="/welcome" element={<WelcomeScreen />} />
           <Route path="/register" element={<RegisterScreen />} />
@@ -75,16 +78,16 @@ export default function App() {
           <Route path="/explore" element={<ExploreBusiness />} />
           <Route path="/subscriptions" element={<MySubscriptions />} />
           
-          {/* Business Routes */}
-          <Route path="/business" element={<MyBusinesses />} />
-          <Route path="/business/request" element={<BusinessServiceRequest />} />
-          <Route path="/business/requests" element={<MyServiceRequests />} />
-          <Route path="/business/:businessId/manage" element={<BusinessManagement />} />
-          <Route path="/business/:businessId/products" element={<BusinessProducts />} />
-          <Route path="/business/:businessId/offers" element={<BusinessOffers />} />
-          <Route path="/business/:businessId/customer/:customerId" element={<Customer360Profile />} />
-          <Route path="/business/:businessId/customer/:customerId/history" element={<CustomerTransactionHistory />} />
-          <Route path="/business/:businessId/customer/:customerId/chat" element={<CustomerChat />} />
+          {/* Business Routes - Protected */}
+          <Route path="/business" element={<ProtectedRoute><MyBusinesses /></ProtectedRoute>} />
+          <Route path="/business/request" element={<ProtectedRoute><BusinessServiceRequest /></ProtectedRoute>} />
+          <Route path="/business/requests" element={<ProtectedRoute><MyServiceRequests /></ProtectedRoute>} />
+          <Route path="/business/:businessId/manage" element={<ProtectedRoute><BusinessManagement /></ProtectedRoute>} />
+          <Route path="/business/:businessId/products" element={<ProtectedRoute><BusinessProducts /></ProtectedRoute>} />
+          <Route path="/business/:businessId/offers" element={<ProtectedRoute><BusinessOffers /></ProtectedRoute>} />
+          <Route path="/business/:businessId/customer/:customerId" element={<ProtectedRoute><Customer360Profile /></ProtectedRoute>} />
+          <Route path="/business/:businessId/customer/:customerId/history" element={<ProtectedRoute><CustomerTransactionHistory /></ProtectedRoute>} />
+          <Route path="/business/:businessId/customer/:customerId/chat" element={<ProtectedRoute><CustomerChat /></ProtectedRoute>} />
           
           {/* Cashier Routes */}
           <Route path="/cashier/:storeId" element={<CashierApp />} />
@@ -92,23 +95,24 @@ export default function App() {
           {/* Notifications */}
           <Route path="/notifications" element={<NotificationsScreen />} />
           
-          {/* Admin Routes */}
+          {/* Admin Routes - Protected with Admin Role */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/businesses" element={<AdminBusinesses />} />
-          <Route path="/admin/packages" element={<AdminPackages />} />
-          <Route path="/admin/service-requests" element={<AdminServiceRequests />} />
-          <Route path="/admin/analytics" element={<AdminAnalytics />} />
-          <Route path="/admin/settings" element={<AdminSettings />} />
+          <Route path="/admin/dashboard" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsers /></ProtectedRoute>} />
+          <Route path="/admin/businesses" element={<ProtectedRoute requireAdmin><AdminBusinesses /></ProtectedRoute>} />
+          <Route path="/admin/packages" element={<ProtectedRoute requireAdmin><AdminPackages /></ProtectedRoute>} />
+          <Route path="/admin/service-requests" element={<ProtectedRoute requireAdmin><AdminServiceRequests /></ProtectedRoute>} />
+          <Route path="/admin/analytics" element={<ProtectedRoute requireAdmin><AdminAnalytics /></ProtectedRoute>} />
+          <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><AdminSettings /></ProtectedRoute>} />
           
           {/* Default Redirect */}
           <Route path="/" element={<Navigate to="/welcome" replace />} />
-        </Routes>
-        
-        <Toaster position="top-center" dir="rtl" />
-      </div>
+          </Routes>
+          
+          <Toaster position="top-center" dir="rtl" />
+        </div>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

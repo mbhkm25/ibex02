@@ -22,7 +22,7 @@
  * - No template selection UI (templates are backend-driven)
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Search, 
   Filter,
@@ -63,122 +63,7 @@ import {
   canAdminActivate,
   getStatusMessage
 } from '../../utils/serviceRequestStateMachine';
-import { activateBusinessFromRequest } from '../../api/adminServiceRequests';
-
-// Mock data - In production, this comes from API
-const mockRequests: ServiceRequest[] = [
-  {
-    id: '1',
-    userId: 'user-1',
-    requestNumber: 'REQ-2024-001',
-    status: 'submitted',
-    businessName: 'سوبر ماركت النور',
-    contactInfo: '+966501234567',
-    address: 'الرياض، حي النرجس',
-    managerPhone: '+966507654321',
-    email: 'mohammed@example.com',
-    description: 'نريد خدمة إدارة العملاء لإدارة عملائنا وطلباتهم',
-    businessType: 'both',
-    createdAt: '2024-01-20',
-    submittedAt: '2024-01-20',
-    suggestedTemplateIds: ['template-1', 'template-2'],
-    templateMatchScores: [
-      { templateId: 'template-1', score: 85, reasons: ['Keywords matched', 'Business type matched'] },
-      { templateId: 'template-2', score: 72, reasons: ['Category matched'] }
-    ]
-  },
-  {
-    id: '2',
-    userId: 'user-2',
-    requestNumber: 'REQ-2024-002',
-    status: 'submitted',
-    businessName: 'مطعم الشام',
-    contactInfo: '+966509876543',
-    address: 'جدة، حي الزهراء',
-    managerPhone: '+966501112233',
-    description: 'نحتاج إلى نظام إدارة عملاء متكامل',
-    businessType: 'both',
-    createdAt: '2024-01-18',
-    submittedAt: '2024-01-18'
-  },
-  {
-    id: '3',
-    userId: 'user-3',
-    requestNumber: 'REQ-2024-003',
-    status: 'approved',
-    businessName: 'صالون الجمال',
-    contactInfo: '+966505556677',
-    address: 'الدمام، حي الفيصلية',
-    managerPhone: '+966508889900',
-    email: 'sara@example.com',
-    description: 'طلب خدمة إدارة العملاء',
-    businessType: 'services',
-    createdAt: '2024-01-15',
-    submittedAt: '2024-01-15',
-    reviewedAt: '2024-01-16',
-    reviewedBy: 'admin-1',
-    approvedAt: '2024-01-16',
-    approvedBy: 'admin-1',
-    selectedTemplateId: 'template-1'
-  },
-  {
-    id: '4',
-    userId: 'user-4',
-    requestNumber: 'REQ-2024-004',
-    status: 'rejected',
-    businessName: 'محل الأجهزة',
-    contactInfo: '+966504445566',
-    address: 'الرياض، حي العليا',
-    managerPhone: '+966507778899',
-    description: 'نريد خدمة إدارة العملاء',
-    businessType: 'products',
-    createdAt: '2024-01-12',
-    submittedAt: '2024-01-12',
-    reviewedAt: '2024-01-13',
-    reviewedBy: 'admin-1',
-    rejectionReason: 'المعلومات غير مكتملة'
-  },
-];
-
-// Mock templates - In production, this comes from API
-const mockTemplates: Template[] = [
-  {
-    id: 'template-1',
-    name: 'Retail Store Template',
-    slug: 'retail-store',
-    version: '1.0.0',
-    category: 'retail',
-    businessTypes: ['products', 'both'],
-    tags: ['grocery', 'supermarket', 'retail'],
-    matchingRules: {
-      keywords: ['grocery', 'supermarket', 'retail'],
-      businessTypes: ['products', 'both'],
-      weight: 85
-    },
-    configuration: {
-      features: {
-        customerManagement: true,
-        orderManagement: true,
-        inventoryManagement: true,
-        paymentProcessing: true,
-        reporting: true
-      },
-      defaultSettings: {
-        allowCreditPurchases: true,
-        defaultCurrency: 'SAR',
-        paymentMethods: ['cash', 'card']
-      },
-      uiConfig: {
-        defaultSections: ['customers', 'orders', 'products'],
-        defaultPermissions: ['view', 'edit', 'delete']
-      }
-    },
-    isActive: true,
-    isDefault: true,
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01'
-  }
-];
+import { activateBusinessFromRequest, listServiceRequests } from '../../api/adminServiceRequests';
 
 export function AdminServiceRequests() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -187,19 +72,41 @@ export function AdminServiceRequests() {
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'submitted' | 'reviewed' | 'approved' | 'rejected'>('all');
+  
+  // State for real data from API
+  const [requests, setRequests] = useState<ServiceRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Filter requests
-  const filteredRequests = mockRequests.filter(request => {
+  // Fetch service requests from API
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const status = activeTab === 'all' ? undefined : activeTab;
+        const result = await listServiceRequests({ status });
+        setRequests(result.requests);
+      } catch (err: any) {
+        console.error('Failed to fetch service requests:', err);
+        setError(err.message || 'فشل تحميل طلبات الخدمة');
+        setRequests([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRequests();
+  }, [activeTab]);
+
+  // Filter requests by search query (client-side filtering for now)
+  const filteredRequests = requests.filter(request => {
     const matchesSearch = 
-      request.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.requestNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.contactInfo.includes(searchQuery);
+      request.businessName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.requestNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.contactInfo?.includes(searchQuery);
     
-    const matchesTab = 
-      activeTab === 'all' || 
-      request.status === activeTab;
-    
-    return matchesSearch && matchesTab;
+    return matchesSearch;
   });
 
   const getStatusBadge = (status: ServiceRequestStatus) => {
@@ -293,17 +200,22 @@ export function AdminServiceRequests() {
     }
   };
 
+  // Calculate stats from real data
   const stats = {
-    total: mockRequests.length,
-    submitted: mockRequests.filter(r => r.status === 'submitted').length,
-    reviewed: mockRequests.filter(r => r.status === 'reviewed').length,
-    approved: mockRequests.filter(r => r.status === 'approved').length,
-    rejected: mockRequests.filter(r => r.status === 'rejected').length,
+    total: requests.length,
+    submitted: requests.filter(r => r.status === 'submitted').length,
+    reviewed: requests.filter(r => r.status === 'reviewed').length,
+    approved: requests.filter(r => r.status === 'approved').length,
+    rejected: requests.filter(r => r.status === 'rejected').length,
   };
 
+  // TODO: Fetch templates from database based on business_model
+  // Templates are now resolved server-side during activation
+  // This function is kept for UI compatibility but returns empty array
   const getSuggestedTemplates = (request: ServiceRequest): Template[] => {
-    if (!request.suggestedTemplateIds) return [];
-    return mockTemplates.filter(t => request.suggestedTemplateIds?.includes(t.id));
+    // Templates are resolved server-side based on business_model
+    // No need to fetch templates for display - they're applied during activation
+    return [];
   };
 
   return (
@@ -372,11 +284,25 @@ export function AdminServiceRequests() {
           </TabsList>
 
           <TabsContent value={activeTab} className="space-y-3">
-            {filteredRequests.length === 0 ? (
+            {loading ? (
+              <Card className="p-8 border-2 border-gray-200 rounded-xl bg-white text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-3"></div>
+                <h3 className="text-base font-black text-gray-900 mb-1">جاري التحميل...</h3>
+                <p className="text-sm text-gray-600">يرجى الانتظار</p>
+              </Card>
+            ) : error ? (
+              <Card className="p-8 border-2 border-red-200 rounded-xl bg-red-50 text-center">
+                <XCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
+                <h3 className="text-base font-black text-red-900 mb-1">حدث خطأ</h3>
+                <p className="text-sm text-red-600">{error}</p>
+              </Card>
+            ) : filteredRequests.length === 0 ? (
               <Card className="p-8 border-2 border-gray-200 rounded-xl bg-white text-center">
                 <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                 <h3 className="text-base font-black text-gray-900 mb-1">لا توجد طلبات</h3>
-                <p className="text-sm text-gray-600">لا توجد طلبات تطابق معايير البحث</p>
+                <p className="text-sm text-gray-600">
+                  {searchQuery ? 'لا توجد طلبات تطابق معايير البحث' : 'لا توجد طلبات في قاعدة البيانات'}
+                </p>
               </Card>
             ) : (
               filteredRequests.map((request) => {
@@ -563,19 +489,20 @@ export function AdminServiceRequests() {
                     </div>
                     <div className="space-y-2">
                       {selectedRequest.templateMatchScores.map((match, index) => {
-                        const template = mockTemplates.find(t => t.id === match.templateId);
+                        // TODO: Fetch template name from database if needed
+                        // For now, templates are resolved server-side during activation
                         return (
                           <div key={match.templateId} className="p-3 bg-white rounded-lg border border-blue-200">
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-xs font-bold text-gray-900">
-                                {index + 1}. {template?.name || 'Template'}
+                                {index + 1}. Template ID: {match.templateId}
                               </span>
                               <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-[9px]">
                                 {match.score}% تطابق
                               </Badge>
                             </div>
                             <div className="text-xs text-gray-600 space-y-1">
-                              {match.reasons.map((reason, i) => (
+                              {match.reasons?.map((reason, i) => (
                                 <div key={i} className="flex items-center gap-1">
                                   <span className="w-1 h-1 bg-blue-400 rounded-full" />
                                   {reason}

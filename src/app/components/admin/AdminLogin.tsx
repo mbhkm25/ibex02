@@ -1,27 +1,35 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Lock, ArrowRight } from 'lucide-react';
+import { Shield, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Card } from '../ui/card';
-import { toast } from 'sonner';
+import { useAuth } from '../../contexts/AuthContext';
 
 export function AdminLogin() {
   const navigate = useNavigate();
+  const { login, isLoading } = useAuth();
   const [formData, setFormData] = useState({
-    username: '',
+    email: '', // Changed from username to email for Neon Auth
     password: ''
   });
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // هنا يمكن إضافة التحقق من بيانات المدير
-    if (formData.username === 'admin' && formData.password === 'admin123') {
-      toast.success('تم تسجيل الدخول بنجاح');
-      navigate('/admin/dashboard');
-    } else {
-      toast.error('بيانات الدخول غير صحيحة');
+    setError(null);
+    
+    if (!formData.email || !formData.password) {
+      setError('يرجى إدخال البريد الإلكتروني وكلمة المرور');
+      return;
+    }
+
+    try {
+      await login(formData.email, formData.password);
+      // Navigation handled by AuthContext (redirects to /admin/dashboard if admin)
+    } catch (err: any) {
+      setError(err.message || 'فشل تسجيل الدخول. يرجى التحقق من البيانات.');
     }
   };
 
@@ -37,14 +45,21 @@ export function AdminLogin() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+              {error}
+            </div>
+          )}
           <div>
-            <Label className="text-sm font-bold text-gray-700 mb-2 block">اسم المستخدم</Label>
+            <Label className="text-sm font-bold text-gray-700 mb-2 block">البريد الإلكتروني</Label>
             <Input
-              value={formData.username}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-              placeholder="أدخل اسم المستخدم"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="admin@example.com"
               className="h-12 rounded-xl border-2 border-gray-200 focus:border-red-400"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -57,16 +72,27 @@ export function AdminLogin() {
               placeholder="أدخل كلمة المرور"
               className="h-12 rounded-xl border-2 border-gray-200 focus:border-red-400"
               required
+              disabled={isLoading}
             />
           </div>
 
           <Button
             type="submit"
             className="w-full bg-red-600 hover:bg-red-700 text-white rounded-xl h-12 font-black"
+            disabled={isLoading}
           >
-            <Lock className="w-4 h-4 ml-2" />
-            تسجيل الدخول
-            <ArrowRight className="w-4 h-4 mr-2" />
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                جاري تسجيل الدخول...
+              </>
+            ) : (
+              <>
+                <Lock className="w-4 h-4 ml-2" />
+                تسجيل الدخول
+                <ArrowRight className="w-4 h-4 mr-2" />
+              </>
+            )}
           </Button>
         </form>
 

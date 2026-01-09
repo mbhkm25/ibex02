@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Building2, 
   Search, 
@@ -54,70 +54,31 @@ export function AdminBusinesses() {
   const [showBusinessDetails, setShowBusinessDetails] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved' | 'suspended'>('all');
 
-  // Mock Data
-  const businesses: Business[] = [
-    {
-      id: '1',
-      name: 'سوبر ماركت الرحمة',
-      logo: '🏪',
-      ownerName: 'أحمد محمد',
-      ownerPhone: '+966501234567',
-      type: 'both',
-      status: 'approved',
-      customersCount: 245,
-      ordersCount: 1234,
-      totalRevenue: 125000,
-      subscriptionPackage: 'باقة أساسية',
-      subscriptionStatus: 'active',
-      createdAt: '2024-01-10',
-      approvedDate: '2024-01-15'
-    },
-    {
-      id: '2',
-      name: 'مطعم البيك',
-      logo: '🍔',
-      ownerName: 'فاطمة علي',
-      ownerPhone: '+966507654321',
-      type: 'both',
-      status: 'approved',
-      customersCount: 189,
-      ordersCount: 856,
-      totalRevenue: 89000,
-      subscriptionPackage: 'باقة متوسطة',
-      subscriptionStatus: 'active',
-      createdAt: '2024-01-05',
-      approvedDate: '2024-01-10'
-    },
-    {
-      id: '3',
-      name: 'صيدلية النهدي',
-      logo: '💊',
-      ownerName: 'خالد سعيد',
-      ownerPhone: '+966509876543',
-      type: 'products',
-      status: 'pending',
-      customersCount: 0,
-      ordersCount: 0,
-      totalRevenue: 0,
-      createdAt: '2024-01-20'
-    },
-    {
-      id: '4',
-      name: 'صالون التجميل',
-      logo: '💅',
-      ownerName: 'سارة أحمد',
-      ownerPhone: '+966501112233',
-      type: 'services',
-      status: 'approved',
-      customersCount: 67,
-      ordersCount: 234,
-      totalRevenue: 34000,
-      subscriptionPackage: 'باقة أساسية',
-      subscriptionStatus: 'expired',
-      createdAt: '2023-12-15',
-      approvedDate: '2023-12-20'
-    },
-  ];
+  // State for real data from API
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch businesses from API
+  useEffect(() => {
+    const fetchBusinesses = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        // TODO: Create API endpoint /api/admin/businesses
+        // For now, return empty array - businesses come from activated service requests
+        setBusinesses([]);
+      } catch (err: any) {
+        console.error('Failed to fetch businesses:', err);
+        setError(err.message || 'فشل تحميل الأعمال');
+        setBusinesses([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBusinesses();
+  }, []);
 
   const filteredBusinesses = businesses.filter(business => {
     const matchesSearch = business.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -171,6 +132,36 @@ export function AdminBusinesses() {
     pending: businesses.filter(b => b.status === 'pending').length,
     suspended: businesses.filter(b => b.status === 'suspended').length,
   };
+
+  if (loading) {
+    return (
+      <AdminLayout 
+        title="إدارة المتاجر والأعمال" 
+        subtitle="عرض وإدارة جميع المتاجر والأعمال في المنصة"
+      >
+        <Card className="p-8 border-2 border-gray-200 rounded-xl bg-white text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-3"></div>
+          <h3 className="text-base font-black text-gray-900 mb-1">جاري التحميل...</h3>
+          <p className="text-sm text-gray-600">يرجى الانتظار</p>
+        </Card>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout 
+        title="إدارة المتاجر والأعمال" 
+        subtitle="عرض وإدارة جميع المتاجر والأعمال في المنصة"
+      >
+        <Card className="p-8 border-2 border-red-200 rounded-xl bg-red-50 text-center">
+          <XCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
+          <h3 className="text-base font-black text-red-900 mb-1">حدث خطأ</h3>
+          <p className="text-sm text-red-600">{error}</p>
+        </Card>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout 
@@ -235,7 +226,17 @@ export function AdminBusinesses() {
           </TabsList>
 
           <TabsContent value={activeTab} className="space-y-3">
-            {filteredBusinesses.map((business) => {
+            {filteredBusinesses.length === 0 ? (
+              <Card className="p-8 border-2 border-gray-200 rounded-xl bg-white text-center">
+                <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <h3 className="text-base font-black text-gray-900 mb-1">لا توجد أعمال</h3>
+                <p className="text-sm text-gray-600">
+                  لم يتم تفعيل أي عمل بعد.<br />
+                  الأعمال ستظهر هنا بعد تفعيلها من طلبات الخدمة.
+                </p>
+              </Card>
+            ) : (
+              filteredBusinesses.map((business) => {
               const statusBadge = getStatusBadge(business.status);
               const StatusIcon = statusBadge.icon;
               
@@ -341,7 +342,8 @@ export function AdminBusinesses() {
                   </div>
                 </Card>
               );
-            })}
+              })
+            )}
           </TabsContent>
         </Tabs>
 

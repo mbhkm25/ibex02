@@ -15,7 +15,7 @@ import {
   ActivateBusinessPayload 
 } from '../types/serviceRequest';
 import { activateBusiness, canActivateBusiness } from '../services/businessActivationService';
-import { getAdminSecret } from '../config/adminConfig';
+import { getAuthHeader, isAdmin } from '../services/auth';
 
 /**
  * Base API URL (would be from environment in production)
@@ -26,78 +26,30 @@ const API_BASE_URL = '/api/admin/service-requests';
  * Approve service request
  * 
  * POST /api/admin/service-requests/:id/approve
+ * 
+ * TODO: Implement this endpoint in serverless function
  */
 export async function approveServiceRequest(
   requestId: string,
   payload: ApproveRequestPayload
 ): Promise<ServiceRequest> {
-  // In production: Actual HTTP request
-  // const response = await fetch(`${API_BASE_URL}/${requestId}/approve`, {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify(payload),
-  // });
-  // return response.json();
-
-  // Mock implementation for MVP
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id: requestId,
-        userId: 'user-1',
-        requestNumber: 'REQ-2024-001',
-        status: 'approved',
-        businessName: 'Test Business',
-        contactInfo: '+966501234567',
-        address: 'Test Address',
-        managerPhone: '+966507654321',
-        description: 'Test Description',
-        businessType: 'both',
-        businessModel: payload.selectedTemplateId ? 'commerce' : 'commerce', // Mock
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      } as ServiceRequest);
-    }, 500);
-  });
+  // TODO: Implement actual API endpoint
+  throw new Error('approveServiceRequest API endpoint not yet implemented.');
 }
 
 /**
  * Reject service request
  * 
  * POST /api/admin/service-requests/:id/reject
+ * 
+ * TODO: Implement this endpoint in serverless function
  */
 export async function rejectServiceRequest(
   requestId: string,
   payload: RejectRequestPayload
 ): Promise<ServiceRequest> {
-  // In production: Actual HTTP request
-  // const response = await fetch(`${API_BASE_URL}/${requestId}/reject`, {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify(payload),
-  // });
-  // return response.json();
-
-  // Mock implementation for MVP
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id: requestId,
-        userId: 'user-1',
-        requestNumber: 'REQ-2024-001',
-        status: 'rejected',
-        businessName: 'Test Business',
-        contactInfo: '+966501234567',
-        address: 'Test Address',
-        managerPhone: '+966507654321',
-        description: 'Test Description',
-        businessType: 'both',
-        rejectionReason: payload.reason,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      } as ServiceRequest);
-    }, 500);
-  });
+  // TODO: Implement actual API endpoint
+  throw new Error('rejectServiceRequest API endpoint not yet implemented.');
 }
 
 /**
@@ -130,23 +82,23 @@ export async function activateBusinessFromRequest(
   templateInstance: any; // TemplateInstance type
   activationDate: string;
 }> {
-  // Get admin secret
-  // TODO: Replace ADMIN_SECRET with real authentication system
-  const adminSecret = getAdminSecret();
-  
-  if (!adminSecret) {
-    throw new Error(
-      'Admin secret is not configured. ' +
-      'Set VITE_ADMIN_SECRET environment variable.'
-    );
+  // Check if user is authenticated and has admin role
+  if (!isAdmin()) {
+    throw new Error('Admin role required to activate businesses');
   }
   
-  // Call serverless function with admin secret
+  // Get JWT token from auth service
+  const authHeaders = getAuthHeader();
+  if (!authHeaders.Authorization) {
+    throw new Error('Not authenticated. Please log in.');
+  }
+  
+  // Call serverless function with JWT token
   const response = await fetch('/api/admin/activate-service-request', {
     method: 'POST',
     headers: { 
       'Content-Type': 'application/json',
-      'x-admin-secret': adminSecret, // MVP: Admin secret header
+      ...authHeaders, // Send JWT token in Authorization header
     },
     body: JSON.stringify({ 
       serviceRequestId: requestId,
@@ -167,38 +119,20 @@ export async function activateBusinessFromRequest(
  * Get service request by ID
  * 
  * GET /api/admin/service-requests/:id
+ * 
+ * TODO: Implement this endpoint in serverless function
  */
 export async function getServiceRequest(requestId: string): Promise<ServiceRequest> {
-  // In production: Actual HTTP request
-  // const response = await fetch(`${API_BASE_URL}/${requestId}`);
-  // return response.json();
-
-  // Mock implementation for MVP
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id: requestId,
-        userId: 'user-1',
-        requestNumber: 'REQ-2024-001',
-        status: 'approved',
-        businessName: 'Test Business',
-        contactInfo: '+966501234567',
-        address: 'Test Address',
-        managerPhone: '+966507654321',
-        description: 'Test Description',
-        businessType: 'both',
-        businessModel: 'commerce',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      } as ServiceRequest);
-    }, 300);
-  });
+  // TODO: Implement actual API endpoint
+  throw new Error('getServiceRequest API endpoint not yet implemented. Service requests must be fetched via listServiceRequests.');
 }
 
 /**
  * List service requests
  * 
  * GET /api/admin/service-requests
+ * 
+ * Architecture: Calls serverless function to fetch from database
  */
 export async function listServiceRequests(params?: {
   status?: string;
@@ -210,21 +144,32 @@ export async function listServiceRequests(params?: {
   page: number;
   pageSize: number;
 }> {
-  // In production: Actual HTTP request with query params
-  // const queryParams = new URLSearchParams(params as any);
-  // const response = await fetch(`${API_BASE_URL}?${queryParams}`);
-  // return response.json();
+  const adminSecret = getAdminSecret();
+  
+  if (!adminSecret) {
+    throw new Error('Admin secret is not configured.');
+  }
 
-  // Mock implementation for MVP
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        requests: [],
-        total: 0,
-        page: params?.page || 1,
-        pageSize: params?.pageSize || 20,
-      });
-    }, 300);
+  // Build query string
+  const queryParams = new URLSearchParams();
+  if (params?.status) queryParams.append('status', params.status);
+  if (params?.page) queryParams.append('page', params.page.toString());
+  if (params?.pageSize) queryParams.append('pageSize', params.pageSize.toString());
+
+  const response = await fetch(`/api/admin/service-requests?${queryParams}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-admin-secret': adminSecret,
+    },
   });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch service requests' }));
+    throw new Error(error.message || `Failed to fetch service requests: ${response.statusText}`);
+  }
+
+  const result = await response.json();
+  return result.data;
 }
 

@@ -11,7 +11,7 @@
  * - System creates Business Instance (reality)
  * 
  * Responsibilities:
- * 1. Validate admin authentication (MVP: admin secret)
+ * 1. Validate admin authentication (JWT with admin role)
  * 2. Validate request exists and is approved
  * 3. Validate businessModel is present
  * 4. Resolve template deterministically
@@ -21,23 +21,19 @@
  * 8. Return created BusinessProfile
  * 
  * Guard Rails:
- * - Cannot activate without admin secret
+ * - Cannot activate without JWT authentication
+ * - Cannot activate without admin role
  * - Cannot activate without businessModel
  * - Cannot activate without template resolution
  * - Cannot activate twice
  * - All operations in SQL transaction
  * - Fail fast with clear error messages
  * 
- * Security (MVP):
- * - Admin-only (enforced by ADMIN_SECRET header)
+ * Security:
+ * - Admin-only (enforced by JWT role verification)
+ * - JWT verified using Neon Auth JWKS
  * - Input validation
  * - SQL injection protection (parameterized queries)
- * 
- * TODO: Replace ADMIN_SECRET with real authentication system
- * TODO: Replace header-based auth with role-based access control (RBAC)
- * TODO: Implement JWT tokens with proper expiration
- * TODO: Add session management
- * TODO: Implement proper admin role verification
  */
 
 // Vercel Serverless Function handler
@@ -55,6 +51,7 @@ type VercelResponse = {
   send: (data: any) => void;
 };
 import { query, transaction } from '../_db';
+import { requireAdmin } from '../_auth';
 
 /**
  * Template mapping (deterministic)
@@ -76,48 +73,21 @@ const TEMPLATE_MAP: Record<string, string> = {
 
 
 /**
- * Validate admin secret from request header
- * 
- * MVP Security: Simple secret-based authentication
- * 
- * TODO: Replace with proper JWT token validation
- * TODO: Replace with role-based access control
- * 
- * @param req - Vercel request object
- * @returns true if secret is valid, false otherwise
+ * @deprecated Admin secret validation is replaced by JWT authentication
+ * This function is kept for backward compatibility during migration
+ * Will be removed once all clients are updated
  */
 function validateAdminSecret(req: VercelRequest): boolean {
+  // Legacy support: Check if ADMIN_SECRET is still being used
   const expectedSecret = process.env.ADMIN_SECRET;
+  if (!expectedSecret) return false;
   
-  // If ADMIN_SECRET is not configured, reject all requests
-  if (!expectedSecret) {
-    console.error('[Security] ADMIN_SECRET environment variable is not set. All admin requests are rejected.');
-    return false;
-  }
-  
-  // Get secret from header
   const providedSecret = req.headers['x-admin-secret'];
-  
-  // Handle both string and array (Vercel may normalize headers)
   const secretValue = Array.isArray(providedSecret) 
     ? providedSecret[0] 
     : providedSecret;
   
-  if (!secretValue) {
-    console.warn('[Security] Admin activation attempt without x-admin-secret header');
-    return false;
-  }
-  
-  // Constant-time comparison to prevent timing attacks
-  // For MVP, simple comparison is acceptable
-  // TODO: Use crypto.timingSafeEqual for production
-  const isValid = secretValue === expectedSecret;
-  
-  if (!isValid) {
-    console.warn('[Security] Admin activation attempt with invalid secret');
-  }
-  
-  return isValid;
+  return secretValue === expectedSecret;
 }
 
 export default async function handler(
@@ -132,14 +102,26 @@ export default async function handler(
     });
   }
 
-  // STEP 2: Validate admin secret (CRITICAL - must be first check)
-  // TODO: Replace ADMIN_SECRET with real authentication
-  if (!validateAdminSecret(req)) {
-    console.error('[Security] Unauthorized activation attempt blocked');
-    return res.status(401).json({
-      error: 'UNAUTHORIZED',
-      message: 'Admin authentication required. Invalid or missing admin secret.'
-    });
+  // STEP 2: Validate admin authentication (JWT with admin role)
+  let adminUser;
+  try {
+    adminUser = await requireAdmin(req);
+  } catch (error: any) {
+    // Fallback to legacy admin secret for backward compatibility
+    if (error.message.includes('UNAUTHORIZED') || error.message.includes('FORBIDDEN')) {
+      const hasLegacySecret = validateAdminSecret(req);
+      if (!hasLegacySecret) {
+        console.error('[Security] Unauthorized activation attempt blocked');
+        return res.status(401).json({
+          error: 'UNAUTHORIZED',
+          message: 'Admin authentication required. Invalid or missing JWT token or admin secret.'
+        });
+      }
+      // Legacy secret accepted, continue
+      console.warn('[Security] Using deprecated admin secret. Please migrate to JWT authentication.');
+    } else {
+      throw error;
+    }
   }
 
   try {
