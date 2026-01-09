@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wallet, Fingerprint, ScanFace, ArrowRight, ShieldCheck, TrendingUp, Shield } from 'lucide-react';
+import { Wallet, Fingerprint, ScanFace, ArrowRight, ShieldCheck, TrendingUp, Shield, Download } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -12,6 +12,34 @@ export function LoginScreen() {
     phone: '',
     password: ''
   });
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [canInstall, setCanInstall] = useState(false);
+
+  // Capture PWA install event (Web App Install Banner)
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setCanInstall(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      toast.success('تم تثبيت التطبيق بنجاح!');
+    }
+    setDeferredPrompt(null);
+    setCanInstall(false);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -182,6 +210,19 @@ export function LoginScreen() {
             </div>
             
             <div className="mt-6 space-y-3">
+                {/* Install App Button */}
+                {canInstall && (
+                    <div className="pb-3 border-b border-gray-100">
+                        <Button
+                            variant="outline"
+                            className="w-full h-11 rounded-2xl border-2 border-blue-200 text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 font-bold gap-2"
+                            onClick={handleInstallClick}
+                        >
+                            <Download className="w-4 h-4" />
+                            تثبيت التطبيق
+                        </Button>
+                    </div>
+                )}
                 <div className="text-center">
                     <Button 
                         variant="link" 
