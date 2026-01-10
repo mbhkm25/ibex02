@@ -23,7 +23,7 @@ type VercelResponse = {
   json: (data: any) => void;
 };
 
-const NEON_AUTH_BASE = 'https://ep-flat-hall-a7h51kjz.neonauth.ap-southeast-2.aws.neon.tech/neondb/auth';
+const NEON_AUTH_BASE = process.env.NEON_AUTH_BASE || 'https://ep-flat-hall-a7h51kjz.neonauth.ap-southeast-2.aws.neon.tech/neondb/auth';
 
 export default async function handler(
   req: VercelRequest,

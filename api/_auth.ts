@@ -20,8 +20,8 @@
 import jwt from 'jsonwebtoken';
 import jwksClient, { SigningKey } from 'jwks-rsa';
 
-const NEON_AUTH_ISSUER = 'https://ep-flat-hall-a7h51kjz.neonauth.ap-southeast-2.aws.neon.tech/neondb/auth';
-const JWKS_URI = `${NEON_AUTH_ISSUER}/.well-known/jwks.json`;
+const NEON_AUTH_ISSUER = process.env.NEON_AUTH_ISSUER || 'https://ep-flat-hall-a7h51kjz.neonauth.ap-southeast-2.aws.neon.tech/neondb/auth';
+const JWKS_URI = process.env.NEON_AUTH_JWKS_URL || `${NEON_AUTH_ISSUER}/.well-known/jwks.json`;
 
 /**
  * JWKS Client for fetching public keys

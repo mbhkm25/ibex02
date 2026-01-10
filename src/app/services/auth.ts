@@ -16,8 +16,10 @@
  * - Always verify JWT on backend
  */
 
-const NEON_AUTH_ISSUER = 'https://ep-flat-hall-a7h51kjz.neonauth.ap-southeast-2.aws.neon.tech/neondb/auth';
-const NEON_AUTH_BASE = NEON_AUTH_ISSUER;
+// Neon Auth configuration from environment variables
+// For Vite, use import.meta.env.VITE_* prefix
+const NEON_AUTH_ISSUER = import.meta.env.VITE_NEON_AUTH_ISSUER || 'https://ep-flat-hall-a7h51kjz.neonauth.ap-southeast-2.aws.neon.tech/neondb/auth';
+const NEON_AUTH_BASE = import.meta.env.VITE_NEON_AUTH_BASE || NEON_AUTH_ISSUER;
 
 export interface AuthUser {
   id: string;
