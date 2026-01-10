@@ -49,69 +49,99 @@ export default async function handler(
     }
 
     // Call Neon Auth signup endpoint
-    // Try multiple possible endpoints
+    // Neon Auth uses OIDC-compatible endpoints
+    // Based on Neon Auth documentation, the correct endpoint is /signupEmailPassword
+    // But we'll also try /signup and /register as fallbacks
+    
     let authResponse: Response | null = null;
     let authData: any = null;
     let lastError: any = null;
+    const triedEndpoints: string[] = [];
 
-    // Try /signupEmailPassword first (most common)
-    try {
-      authResponse = await fetch(`${NEON_AUTH_BASE}/signupEmailPassword`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          ...(phone && { phone }),
-          ...(fullName && { name: fullName }),
-        }),
-      });
-
-      if (authResponse.ok) {
-        authData = await authResponse.json();
-      } else {
-        lastError = await authResponse.json().catch(() => ({ message: 'Registration failed' }));
-      }
-    } catch (error) {
-      lastError = error;
+    // Prepare request body according to Neon Auth format
+    const requestBody: any = {
+      email,
+      password,
+    };
+    
+    // Add optional fields if provided
+    if (phone) {
+      requestBody.phone = phone;
+    }
+    if (fullName) {
+      requestBody.name = fullName;
+      // Some Neon Auth implementations also accept full_name
+      requestBody.full_name = fullName;
     }
 
-    // Try /signup if first attempt failed
-    if (!authResponse || !authResponse.ok) {
+    // Try /signupEmailPassword first (most common for Neon Auth)
+    const endpoints = [
+      '/signupEmailPassword',
+      '/signup',
+      '/register',
+      '/v1/signup',
+      '/v1/register',
+    ];
+
+    for (const endpoint of endpoints) {
       try {
-        authResponse = await fetch(`${NEON_AUTH_BASE}/signup`, {
+        const url = `${NEON_AUTH_BASE}${endpoint}`;
+        triedEndpoints.push(url);
+        
+        console.log(`[Register] Trying endpoint: ${url}`);
+        
+        authResponse = await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
-          body: JSON.stringify({
-            email,
-            password,
-            ...(phone && { phone }),
-            ...(fullName && { name: fullName }),
-          }),
+          body: JSON.stringify(requestBody),
         });
 
+        const responseText = await authResponse.text();
+        console.log(`[Register] Response status: ${authResponse.status}`);
+        console.log(`[Register] Response body: ${responseText.substring(0, 200)}`);
+
         if (authResponse.ok) {
-          authData = await authResponse.json();
+          try {
+            authData = JSON.parse(responseText);
+            console.log(`[Register] Success with endpoint: ${endpoint}`);
+            break; // Success, exit loop
+          } catch (parseError) {
+            console.error(`[Register] Failed to parse response from ${endpoint}:`, parseError);
+            lastError = { message: 'Invalid JSON response', endpoint };
+            continue;
+          }
         } else {
-          lastError = await authResponse.json().catch(() => ({ message: 'Registration failed' }));
+          try {
+            lastError = JSON.parse(responseText);
+            console.error(`[Register] Error from ${endpoint}:`, lastError);
+          } catch {
+            lastError = { message: responseText || 'Registration failed', endpoint };
+          }
         }
-      } catch (error) {
-        lastError = error;
+      } catch (error: any) {
+        console.error(`[Register] Network error for ${endpoint}:`, error);
+        lastError = { message: error.message || 'Network error', endpoint };
       }
     }
 
     // If all attempts failed
-    if (!authResponse || !authResponse.ok) {
-      console.error('[Register] Neon Auth error:', lastError);
-      console.error('[Register] Tried endpoints:', [`${NEON_AUTH_BASE}/signupEmailPassword`, `${NEON_AUTH_BASE}/signup`]);
+    if (!authResponse || !authResponse.ok || !authData) {
+      console.error('[Register] All endpoints failed');
+      console.error('[Register] Last error:', lastError);
+      console.error('[Register] Tried endpoints:', triedEndpoints);
       
+      // Return detailed error for debugging
       return res.status(authResponse?.status || 500).json({
         error: 'REGISTRATION_FAILED',
-        message: lastError?.message || lastError?.error || 'فشل إنشاء الحساب. يرجى التحقق من إعدادات Neon Auth.'
+        message: lastError?.message || lastError?.error || 'فشل إنشاء الحساب. يرجى التحقق من إعدادات Neon Auth.',
+        details: {
+          triedEndpoints,
+          lastError: lastError?.message || lastError?.error,
+          statusCode: authResponse?.status,
+        }
       });
     }
 
