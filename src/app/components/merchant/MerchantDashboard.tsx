@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronRight, Users, DollarSign, TrendingUp, QrCode, Receipt, Settings, ShoppingCart } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -12,25 +12,31 @@ export function MerchantDashboard() {
   const { storeId } = useParams();
   const [showQR, setShowQR] = useState(false);
 
-  // Mock data
-  const storeData = {
-    name: 'سوبر ماركت الرحمة',
-    customersCount: 245,
-    totalBalance: 12450,
-    totalCredit: 8900,
-  };
+  // TODO: Fetch store data from API
+  const [storeData, setStoreData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    // TODO: Fetch store data from API based on storeId
+    setLoading(false);
+    setStoreData(null);
+  }, [storeId]);
 
-  const customers = [
-    { id: '1', name: 'محمد أحمد', balance: 250, status: 'نقدي' },
-    { id: '2', name: 'فاطمة علي', balance: -120, status: 'آجل' },
-    { id: '3', name: 'عبدالله سعيد', balance: 500, status: 'نقدي' },
-  ];
+  // TODO: Fetch customers from API
+  const [customers, setCustomers] = useState<any[]>([]);
+  
+  useEffect(() => {
+    // TODO: Fetch customers from API
+    setCustomers([]);
+  }, [storeId]);
 
-  const transactions = [
-    { id: '1', customer: 'محمد أحمد', amount: -45, date: 'اليوم، 2:30 م' },
-    { id: '2', customer: 'فاطمة علي', amount: -120, date: 'اليوم، 11:15 ص' },
-    { id: '3', customer: 'عبدالله سعيد', amount: +500, date: 'أمس، 4:20 م' },
-  ];
+  // TODO: Fetch transactions from API
+  const [transactions, setTransactions] = useState<any[]>([]);
+  
+  useEffect(() => {
+    // TODO: Fetch transactions from API
+    setTransactions([]);
+  }, [storeId]);
 
   return (
     <DashboardLayout 

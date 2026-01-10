@@ -28,21 +28,23 @@ export function CustomerChat() {
   const [message, setMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Mock data
-  const customer = {
-    id: customerId || '1',
-    name: 'أحمد محمد',
-    phone: '+966501234567',
-    avatar: null
-  };
+  // TODO: Fetch customer data from API
+  const [customer, setCustomer] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    // TODO: Fetch customer data from API
+    setLoading(false);
+    setCustomer(null);
+  }, [customerId, businessId]);
 
-  const [messages, setMessages] = useState<Message[]>([
-    { id: '1', text: 'مرحباً، أريد الاستفسار عن منتج معين', sender: 'customer', time: '10:30 ص', date: 'اليوم' },
-    { id: '2', text: 'مرحباً أحمد، تفضل كيف يمكنني مساعدتك؟', sender: 'business', time: '10:32 ص' },
-    { id: '3', text: 'أريد معرفة سعر الأرز البسمتي', sender: 'customer', time: '10:33 ص' },
-    { id: '4', text: 'سعر الأرز البسمتي 45 ر.س للكيلو الواحد', sender: 'business', time: '10:35 ص' },
-    { id: '5', text: 'شكراً لك', sender: 'customer', time: '10:36 ص' },
-  ]);
+  // TODO: Fetch messages from API
+  const [messages, setMessages] = useState<Message[]>([]);
+  
+  useEffect(() => {
+    // TODO: Fetch messages from API
+    setMessages([]);
+  }, [customerId, businessId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

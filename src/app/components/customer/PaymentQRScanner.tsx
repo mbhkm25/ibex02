@@ -16,23 +16,11 @@ export function PaymentQRScanner() {
   const handleScanComplete = () => {
     setScanning(false);
     
-    // Simulate payment QR scan result
+    // TODO: Parse QR data and fetch payment data from API
     // In real app, this would parse QR data containing: cashierId, storeId, invoiceTotal, invoiceRef
-    setTimeout(() => {
-      const mockPaymentData = {
-        storeId: 'store-123',
-        storeName: 'سوبر ماركت الرحمة',
-        cashierId: 'cashier-456',
-        cashierName: 'أحمد الكاشير',
-        invoiceTotal: 125.50,
-        invoiceRef: 'INV-2025-001234',
-        timestamp: new Date().toISOString()
-      };
-      
-      setPaymentData(mockPaymentData);
-      setShowPaymentDetails(true);
-      toast.success('تم قراءة كود الدفع بنجاح');
-    }, 1500);
+    // Then fetch payment data from API
+    // For now, show error or empty state
+    toast.error('يجب ربط هذا المكون بـ API لجلب بيانات الدفع');
   };
 
   const handleConfirmPayment = () => {

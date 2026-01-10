@@ -30,7 +30,10 @@ import {
   ArrowUp,
   X,
   Info,
-  AlertCircle
+  AlertCircle,
+  QrCode,
+  Upload,
+  FileImage
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
@@ -45,6 +48,8 @@ import { CustomerCreditApprovalDialog } from './CustomerCreditApprovalDialog';
 import { CustomerRatingDialog } from './CustomerRatingDialog';
 import { CustomerSuspendDialog } from './CustomerSuspendDialog';
 import { DashboardLayout } from '../layout/DashboardLayout';
+import { uploadFile } from '../../services/storage';
+import { getAuthHeader } from '../../services/auth';
 
 interface Customer {
   id: string;
@@ -105,6 +110,12 @@ export function BusinessManagement() {
   const [business, setBusiness] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [hasActiveBusiness, setHasActiveBusiness] = useState(false);
+  
+  // Logo state
+  const [logoFile, setLogoFile] = useState<any>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
 
   // Empty state data - no mock data allowed
   const customers: Customer[] = [];
@@ -117,13 +128,121 @@ export function BusinessManagement() {
   const totalCredit = 0;
   const activeCredit = 0;
 
-  // Check if business is activated
+  // Check if business is activated and fetch logo
   useEffect(() => {
     // TODO: Check if user has activated business
     // For now, assume no active business
     setHasActiveBusiness(false);
     setLoading(false);
+    
+    // TODO: Fetch business logo from API
+    // For now, logo will be fetched when business data is loaded
   }, [businessId]);
+  
+  // Fetch logo when business has logo_file_id
+  useEffect(() => {
+    const fetchLogo = async () => {
+      if (!business?.logo_file_id || !businessId) return;
+      
+      try {
+        // TODO: Fetch logo metadata via Data API
+        // For now, we'll use a serverless endpoint to get signed URL
+        const authHeaders = getAuthHeader();
+        const response = await fetch(`/api/storage/download-url?file_id=${business.logo_file_id}`, {
+          headers: authHeaders,
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setLogoUrl(data.data.downloadUrl);
+        }
+      } catch (error) {
+        console.error('Failed to fetch logo:', error);
+      }
+    };
+    
+    fetchLogo();
+  }, [business?.logo_file_id, businessId]);
+  
+  // Handle logo upload
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !businessId) return;
+    
+    // Validate file type (images only)
+    if (!file.type.startsWith('image/')) {
+      setLogoError('يجب أن يكون الملف صورة');
+      return;
+    }
+    
+    // Validate file size (2MB max for logo)
+    const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+    if (file.size > MAX_SIZE) {
+      setLogoError(`حجم الملف (${(file.size / 1024 / 1024).toFixed(2)}MB) يتجاوز الحد الأقصى المسموح (2MB)`);
+      return;
+    }
+    
+    setUploadingLogo(true);
+    setLogoError(null);
+    
+    try {
+      // STEP 1: Upload file
+      const uploadResult = await uploadFile({
+        file,
+        businessId,
+        originalFilename: file.name,
+        metadata: { type: 'logo' },
+      });
+      
+      // STEP 2: Update business logo
+      const authHeaders = getAuthHeader();
+      const updateResponse = await fetch('/api/business/update-logo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders,
+        },
+        body: JSON.stringify({
+          business_id: businessId,
+          file_id: uploadResult.id,
+        }),
+      });
+      
+      if (!updateResponse.ok) {
+        const error = await updateResponse.json().catch(() => ({ message: 'Failed to update logo' }));
+        throw new Error(error.message || 'فشل تحديث الشعار');
+      }
+      
+      const updateData = await updateResponse.json();
+      
+      // STEP 3: Update local state
+      setBusiness((prev: any) => ({
+        ...prev,
+        logo_file_id: updateData.data.logo_file_id,
+      }));
+      
+      // STEP 4: Fetch new logo URL
+      const downloadResponse = await fetch(`/api/storage/download-url?file_id=${uploadResult.id}`, {
+        headers: authHeaders,
+      });
+      
+      if (downloadResponse.ok) {
+        const downloadData = await downloadResponse.json();
+        setLogoUrl(downloadData.data.downloadUrl);
+      }
+      
+      toast.success('تم رفع الشعار بنجاح!');
+      
+    } catch (error: any) {
+      console.error('Logo upload error:', error);
+      setLogoError(error.message || 'حدث خطأ أثناء رفع الشعار');
+      toast.error(error.message || 'فشل رفع الشعار');
+    } finally {
+      setUploadingLogo(false);
+      // Reset file input
+      event.target.value = '';
+    }
+  };
 
   const handleCustomerAction = (customerId: string, action: string) => {
     const customer = customers.find(c => c.id === customerId);
@@ -269,6 +388,73 @@ export function BusinessManagement() {
         {/* Overview Section */}
         {activeSection === 'overview' && (
           <div className="space-y-3 p-4">
+            {/* Logo Section */}
+            <Card className="p-4 bg-white border-2 border-gray-200 rounded-xl">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-black text-gray-900">شعار العمل</h3>
+                  <label className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      disabled={uploadingLogo}
+                      className="hidden"
+                      id="logo-upload"
+                    />
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="outline"
+                      className="h-8 px-3 text-xs font-bold rounded-lg border-2 border-gray-200 hover:bg-gray-50"
+                      disabled={uploadingLogo}
+                    >
+                      <span>
+                        {uploadingLogo ? (
+                          <>
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-900 ml-1.5"></div>
+                            جاري الرفع...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-3.5 h-3.5 ml-1.5" />
+                            {logoUrl ? 'تغيير الشعار' : 'رفع شعار'}
+                          </>
+                        )}
+                      </span>
+                    </Button>
+                  </label>
+                </div>
+                
+                {logoError && (
+                  <div className="p-2 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                    <p className="text-xs text-red-700">{logoError}</p>
+                  </div>
+                )}
+                
+                <div className="flex items-center justify-center p-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                  {logoUrl ? (
+                    <img
+                      src={logoUrl}
+                      alt="Business Logo"
+                      className="max-w-full max-h-32 object-contain rounded-lg"
+                      onError={() => {
+                        setLogoUrl(null);
+                        toast.error('فشل تحميل الشعار');
+                      }}
+                    />
+                  ) : (
+                    <div className="text-center">
+                      <FileImage className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                      <p className="text-xs text-gray-500 font-medium">لا يوجد شعار</p>
+                      <p className="text-[10px] text-gray-400 mt-1">حد أقصى 2MB</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Card>
+            
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-2">
               <Card className="p-2.5 bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50 rounded-xl">
@@ -318,6 +504,17 @@ export function BusinessManagement() {
                 <div className="flex-1 text-right">
                   <div className="text-gray-900 text-sm">العروض والإعلانات</div>
                   <div className="text-[10px] text-gray-500 font-normal">إدارة العروض</div>
+                </div>
+                <ChevronLeft className="w-4 h-4 text-gray-400" />
+              </Button>
+              <Button
+                onClick={() => navigate(`/business/${businessId}/qr`)}
+                className="w-full h-11 bg-white border-2 border-gray-200 rounded-xl justify-start font-bold text-sm hover:bg-gray-50 py-2"
+              >
+                <QrCode className="w-4 h-4 ml-2 text-gray-700" />
+                <div className="flex-1 text-right">
+                  <div className="text-gray-900 text-sm">إنشاء QR Code</div>
+                  <div className="text-[10px] text-gray-500 font-normal">إنشاء رموز QR</div>
                 </div>
                 <ChevronLeft className="w-4 h-4 text-gray-400" />
               </Button>

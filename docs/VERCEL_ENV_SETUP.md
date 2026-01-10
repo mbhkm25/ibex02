@@ -40,6 +40,32 @@ These variables are only available in serverless functions, never exposed to the
 - **Format**: `postgresql://user:password@host/db?sslmode=require`
 - **Note**: Never expose this to the frontend
 
+#### `R2_ACCOUNT_ID`
+- **Purpose**: Cloudflare R2 Account ID
+- **Type**: String
+- **Security**: ✅ Server-side only
+- **Where to find**: Cloudflare Dashboard → R2 → Account ID
+
+#### `R2_ACCESS_KEY_ID`
+- **Purpose**: Cloudflare R2 API Access Key ID
+- **Type**: String
+- **Security**: ✅ Server-side only
+- **Where to find**: Cloudflare Dashboard → R2 → Manage R2 API Tokens
+
+#### `R2_SECRET_ACCESS_KEY`
+- **Purpose**: Cloudflare R2 API Secret Access Key
+- **Type**: String
+- **Security**: ✅ Server-side only (highly sensitive)
+- **Where to find**: Cloudflare Dashboard → R2 → Manage R2 API Tokens
+- **Note**: Store securely, never expose
+
+#### `R2_BUCKET_NAME`
+- **Purpose**: Cloudflare R2 bucket name
+- **Type**: String
+- **Security**: ✅ Server-side only
+- **Default**: `assets`
+- **Where to find**: Cloudflare Dashboard → R2 → Your bucket name
+
 ---
 
 ## Setup Instructions
@@ -60,6 +86,10 @@ Add the following variables:
 VITE_ADMIN_SECRET = <your-generated-secret>
 ADMIN_SECRET = <same-secret-as-above>
 DATABASE_URL = postgresql://neondb_owner:npg_W0h7BHyTerFY@ep-flat-hall-a7h51kjz-pooler.ap-southeast-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+R2_ACCOUNT_ID = <your-r2-account-id>
+R2_ACCESS_KEY_ID = <your-r2-access-key-id>
+R2_SECRET_ACCESS_KEY = <your-r2-secret-access-key>
+R2_BUCKET_NAME = assets
 ```
 
 **Important Notes:**
@@ -222,6 +252,10 @@ Check serverless function logs in Vercel dashboard for database connection error
 | `VITE_ADMIN_SECRET` | Frontend | Yes | ⚠️ Exposed to browser |
 | `ADMIN_SECRET` | Backend | Yes | ✅ Server-side only |
 | `DATABASE_URL` | Backend | Yes | ✅ Server-side only |
+| `R2_ACCOUNT_ID` | Backend | Yes | ✅ Server-side only |
+| `R2_ACCESS_KEY_ID` | Backend | Yes | ✅ Server-side only |
+| `R2_SECRET_ACCESS_KEY` | Backend | Yes | ✅ Server-side only (highly sensitive) |
+| `R2_BUCKET_NAME` | Backend | No | ✅ Server-side only (default: `assets`) |
 
 ---
 

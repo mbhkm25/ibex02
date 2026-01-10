@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   ChevronRight, 
@@ -55,40 +55,39 @@ export function CustomerWallet() {
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [copiedAccountId, setCopiedAccountId] = useState<string | null>(null);
 
-  // Mock data
-  const wallet = {
-    storeName: 'سوبر ماركت الرحمة',
-    storeLogo: '🏪',
-    balance: 250,
-    creditStatus: 'نقدي',
-    creditLimit: 0,
-    creditRequestStatus: null as 'pending' | 'approved' | 'rejected' | null,
-    suggestedCreditLimit: 500,
-    joinDate: '2023-06-15',
-    totalOrders: 45,
-    totalSpent: 12500,
-    averageOrderValue: 278,
-    lastOrderDate: 'اليوم، 2:30 م',
-    rating: 4.5,
-  };
+  // TODO: Fetch wallet data from API
+  const [wallet, setWallet] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    // TODO: Fetch wallet data from API based on storeId
+    setLoading(false);
+    setWallet(null);
+  }, [storeId]);
 
-  const transactions = [
-    { id: '1', type: 'purchase', amount: -45, date: 'اليوم، 2:30 م', note: 'شراء مواد غذائية', icon: ShoppingBag },
-    { id: '2', type: 'topup', amount: +300, date: 'أمس، 11:15 ص', note: 'إضافة رصيد', icon: ArrowUp },
-    { id: '3', type: 'purchase', amount: -50, date: '2 يناير، 4:20 م', note: 'شراء', icon: ShoppingBag },
-  ];
+  // TODO: Fetch transactions from API
+  const [transactions, setTransactions] = useState<any[]>([]);
+  
+  useEffect(() => {
+    // TODO: Fetch transactions from API
+    setTransactions([]);
+  }, [storeId]);
 
-  const recentOrders = [
-    { id: '#1234', date: 'اليوم، 2:30 م', amount: 250, status: 'مكتمل', items: 5 },
-    { id: '#1230', date: 'أمس، 7:15 م', amount: 180, status: 'مكتمل', items: 3 },
-    { id: '#1225', date: '3 يناير', amount: 320, status: 'مكتمل', items: 8 },
-  ];
+  // TODO: Fetch recent orders from API
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  
+  useEffect(() => {
+    // TODO: Fetch recent orders from API
+    setRecentOrders([]);
+  }, [storeId]);
 
-  // Mock data - Store Bank Accounts (يجب أن تأتي من API)
-  const storeBankAccounts: BankAccount[] = [
-    { id: '1', bankName: 'البنك الأهلي', accountNumber: 'SA1234567890123456789012', notes: 'الحساب الرئيسي' },
-    { id: '2', bankName: 'STC Pay', accountNumber: '0501234567', notes: 'محفظة إلكترونية' },
-  ];
+  // TODO: Fetch store bank accounts from API
+  const [storeBankAccounts, setStoreBankAccounts] = useState<BankAccount[]>([]);
+  
+  useEffect(() => {
+    // TODO: Fetch store bank accounts from API
+    setStoreBankAccounts([]);
+  }, [storeId]);
 
   const selectedBankAccount = storeBankAccounts.find(b => b.id === selectedBank);
 

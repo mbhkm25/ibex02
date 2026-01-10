@@ -45,32 +45,42 @@ import {
   getStatusMessage
 } from '../../utils/serviceRequestStateMachine';
 import { toast } from 'sonner';
-
-// TODO: Remove mock data - fetch from API
-// All data must come from database via API
+import { queryData } from '../../services/dataApi';
+import { useAuth } from '../../contexts/AuthContext';
 
 export function MyServiceRequests() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   
-  // State for real data from API
+  // State for real data from Data API
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch user's service requests from API
+  // Fetch user's service requests from Neon Data API
   useEffect(() => {
     const fetchRequests = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch('/api/service-requests');
-        if (!response.ok) {
-          throw new Error('Failed to fetch service requests');
-        }
-        const result = await response.json();
-        setRequests(result.data?.requests || []);
+        
+        // Query service_requests table via Data API
+        // RLS policy ensures user only sees their own requests
+        const data = await queryData<ServiceRequest>('service_requests', {
+          select: 'id,status,business_model,business_name,description,rejection_reason,created_at,updated_at',
+          order: 'created_at.desc',
+        });
+        
+        setRequests(data || []);
       } catch (err: any) {
         console.error('Failed to fetch service requests:', err);
+        
+        // Handle 401 - logout user
+        if (err.message.includes('Not authenticated') || err.message.includes('Session expired')) {
+          logout();
+          return;
+        }
+        
         setError(err.message || 'فشل تحميل طلبات الخدمة');
         setRequests([]);
       } finally {
@@ -79,7 +89,7 @@ export function MyServiceRequests() {
     };
 
     fetchRequests();
-  }, []);
+  }, [logout]);
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 

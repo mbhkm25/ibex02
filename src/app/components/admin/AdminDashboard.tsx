@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
@@ -22,8 +22,18 @@ import { AdminLayout } from './AdminLayout';
 export function AdminDashboard() {
   const navigate = useNavigate();
 
-  // Mock Data
-  const stats = {
+  // TODO: Fetch stats from API
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    // TODO: Fetch stats from API
+    setLoading(false);
+    setStats(null);
+  }, []);
+
+  // Empty stats - no mock data
+  const emptyStats = {
     totalUsers: 1247,
     activeUsers: 892,
     totalBusinesses: 156,
@@ -34,18 +44,21 @@ export function AdminDashboard() {
     todayTransactions: 234
   };
 
-  const recentActivities = [
-    { id: '1', type: 'user', action: 'تسجيل مستخدم جديد', user: 'أحمد محمد', time: 'منذ 5 دقائق', status: 'success' },
-    { id: '2', type: 'business', action: 'طلب موافقة متجر جديد', business: 'سوبر ماركت النور', time: 'منذ 15 دقيقة', status: 'pending' },
-    { id: '3', type: 'request', action: 'طلب خدمة إدارة العملاء', business: 'مطعم البيك', time: 'منذ ساعة', status: 'pending' },
-    { id: '4', type: 'transaction', action: 'معاملة كبيرة', amount: '5,000 ر.س', time: 'منذ ساعتين', status: 'success' },
-  ];
+  // TODO: Fetch recent activities from API
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  
+  useEffect(() => {
+    // TODO: Fetch recent activities from API
+    setRecentActivities([]);
+  }, []);
 
-  const pendingItems = [
-    { id: '1', type: 'business', title: 'طلب موافقة متجر جديد', subtitle: 'سوبر ماركت النور', count: 3 },
-    { id: '2', type: 'service', title: 'طلبات خدمة إدارة العملاء', subtitle: 'في انتظار المراجعة', count: 5 },
-    { id: '3', type: 'user', title: 'حسابات معلقة', subtitle: 'تحتاج مراجعة', count: 4 },
-  ];
+  // TODO: Fetch pending items from API
+  const [pendingItems, setPendingItems] = useState<any[]>([]);
+  
+  useEffect(() => {
+    // TODO: Fetch pending items from API
+    setPendingItems([]);
+  }, []);
 
   const StatCard = ({ icon, title, value, change, trend }: any) => (
     <Card className="p-4 bg-white border border-gray-200 rounded-xl">

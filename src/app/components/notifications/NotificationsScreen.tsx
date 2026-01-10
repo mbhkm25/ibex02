@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, DollarSign, TrendingUp, ShoppingCart, Bell } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -20,8 +21,18 @@ interface Notification {
 export function NotificationsScreen() {
   const navigate = useNavigate();
 
-  // Mock notifications data
-  const notifications: Notification[] = [
+  // TODO: Fetch notifications from API
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    // TODO: Fetch notifications from API
+    setLoading(false);
+    setNotifications([]);
+  }, []);
+
+  // Empty notifications - no mock data
+  const emptyNotifications: Notification[] = [
     {
       id: '1',
       type: 'debit',

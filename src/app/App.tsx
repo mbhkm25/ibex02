@@ -17,6 +17,8 @@ import { MerchantDashboard } from './components/merchant/MerchantDashboard';
 import { CustomerProfile } from './components/merchant/CustomerProfile';
 import { QRScanner } from './components/customer/QRScanner';
 import { PaymentQRScanner } from './components/customer/PaymentQRScanner';
+import { QRCodeScanner } from './components/qr/QRCodeScanner';
+import { QRCodeResolver } from './components/qr/QRCodeResolver';
 import { CustomerWallet } from './components/customer/CustomerWallet';
 import { ExploreBusiness } from './components/customer/ExploreBusiness';
 import { MySubscriptions } from './components/customer/MySubscriptions';
@@ -33,6 +35,7 @@ import { BusinessOffers } from './components/business/BusinessOffers';
 import { CustomerTransactionHistory } from './components/business/CustomerTransactionHistory';
 import { CustomerChat } from './components/business/CustomerChat';
 import { Customer360Profile } from './components/business/Customer360Profile';
+import { QRGenerator } from './components/business/QRGenerator';
 
 // Cashier App
 import { CashierApp } from './components/cashier/CashierApp';
@@ -72,6 +75,8 @@ export default function App() {
           <Route path="/scan" element={<Navigate to="/scan/store" replace />} />
           <Route path="/scan/store" element={<QRScanner />} />
           <Route path="/scan/pay" element={<PaymentQRScanner />} />
+          <Route path="/scan/qr" element={<ProtectedRoute><QRCodeScanner /></ProtectedRoute>} />
+          <Route path="/q/:qrId" element={<ProtectedRoute><QRCodeResolver /></ProtectedRoute>} />
           <Route path="/wallet/:storeId" element={<CustomerWallet />} />
           <Route path="/wallet/:storeId/products" element={<ProductsAndServices />} />
           <Route path="/wallet/:storeId/history" element={<TransactionHistory />} />
@@ -85,6 +90,7 @@ export default function App() {
           <Route path="/business/:businessId/manage" element={<ProtectedRoute><BusinessManagement /></ProtectedRoute>} />
           <Route path="/business/:businessId/products" element={<ProtectedRoute><BusinessProducts /></ProtectedRoute>} />
           <Route path="/business/:businessId/offers" element={<ProtectedRoute><BusinessOffers /></ProtectedRoute>} />
+          <Route path="/business/:businessId/qr" element={<ProtectedRoute><QRGenerator /></ProtectedRoute>} />
           <Route path="/business/:businessId/customer/:customerId" element={<ProtectedRoute><Customer360Profile /></ProtectedRoute>} />
           <Route path="/business/:businessId/customer/:customerId/history" element={<ProtectedRoute><CustomerTransactionHistory /></ProtectedRoute>} />
           <Route path="/business/:businessId/customer/:customerId/chat" element={<ProtectedRoute><CustomerChat /></ProtectedRoute>} />

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   ShoppingCart, 
@@ -40,23 +40,25 @@ export function ProductsAndServices() {
   const [showCart, setShowCart] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
 
-  // Mock store data - In real app, this would be fetched based on storeId
-  // This should match the store data from CustomerWallet
-  const getStoreData = (id: string | undefined) => {
-    // Mock stores database - In real app, this would be an API call
-    const stores: Record<string, { name: string; logo: string }> = {
-      '1': { name: 'سوبر ماركت الرحمة', logo: '🏪' },
-      'store-123': { name: 'سوبر ماركت الرحمة', logo: '🏪' },
-      'store-abc123xyz': { name: 'مطعم البيك', logo: '🍔' },
-    };
-    
-    return stores[id || '1'] || { name: 'المتجر', logo: '🏪' };
-  };
+  // TODO: Fetch store data from API
+  const [storeData, setStoreData] = useState<{ name: string; logo: string; currency?: string }>({ name: 'المتجر', logo: '🏪', currency: 'SAR' });
+  const [loading, setLoading] = useState(true);
 
-  const storeData = getStoreData(storeId);
+  useEffect(() => {
+    // TODO: Fetch store data from API based on storeId
+    setLoading(false);
+  }, [storeId]);
 
-  // Mock data - Products and Services
-  const products: Product[] = [
+  // TODO: Fetch products from API
+  const [products, setProducts] = useState<Product[]>([]);
+  
+  useEffect(() => {
+    // TODO: Fetch products from API based on storeId
+    setProducts([]);
+  }, [storeId]);
+
+  // Empty products array - no mock data
+  const emptyProducts: Product[] = [
     {
       id: '1',
       name: 'أرز بسمتي',
@@ -106,6 +108,9 @@ export function ProductsAndServices() {
       inStock: false
     }
   ];
+
+  // Use empty array - no mock data
+  const actualProducts: Product[] = [];
 
   const filteredProducts = products.filter(p => 
     p.name.includes(searchQuery) || p.description.includes(searchQuery)

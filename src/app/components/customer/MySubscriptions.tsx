@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Store, 
@@ -122,8 +122,18 @@ export function MySubscriptions() {
   const [convertTo, setConvertTo] = useState<'SAR' | 'YER' | 'USD'>('USD');
   const [convertAmount, setConvertAmount] = useState('');
 
-  // Mock data - Subscriptions
-  const subscriptions: Subscription[] = [
+  // TODO: Fetch subscriptions from API
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    // TODO: Fetch subscriptions from API
+    setLoading(false);
+    setSubscriptions([]);
+  }, []);
+
+  // Empty subscriptions array - no mock data
+  const emptySubscriptions: Subscription[] = [
     {
       id: '1',
       name: 'سوبر ماركت الرحمة',
@@ -226,28 +236,42 @@ export function MySubscriptions() {
     }
   ];
 
-  // Mock data - Payment History
-  const paymentHistory: PaymentHistory[] = [
+  // TODO: Fetch payment history from API
+  const [paymentHistory, setPaymentHistory] = useState<PaymentHistory[]>([]);
+  
+  useEffect(() => {
+    // TODO: Fetch payment history from API
+    setPaymentHistory([]);
+  }, []);
+
+  // Empty payment history - no mock data
+  const emptyPaymentHistory: PaymentHistory[] = [
     { id: 'ph-1', debtId: 'debt-2', amount: 20, currency: 'SAR', paymentDate: '2024-01-15', method: 'wallet', status: 'completed' },
     { id: 'ph-2', debtId: 'debt-1', amount: 50, currency: 'SAR', paymentDate: '2024-01-10', method: 'cash', status: 'completed' },
     { id: 'ph-3', debtId: 'debt-4', amount: 10000, currency: 'YER', paymentDate: '2024-01-05', method: 'bank', status: 'completed' },
   ];
 
-  // Mock data - Notifications
-  const notifications: Notification[] = [
-    { id: 'n-1', type: 'debt_overdue', title: 'دين متأخر', message: 'دين بقيمة 45 ر.س متأخر عن السداد', debtId: 'debt-2', date: '2024-01-21', read: false },
-    { id: 'n-2', type: 'debt_due', title: 'دين مستحق قريباً', message: 'دين بقيمة 150 ر.س مستحق خلال 7 أيام', debtId: 'debt-1', date: '2024-01-18', read: false },
-    { id: 'n-3', type: 'payment_reminder', title: 'تذكير بالدفع', message: 'تذكير: دين بقيمة 200 $ مستحق في 10 فبراير', debtId: 'debt-3', date: '2024-01-20', read: true },
-  ];
+  // TODO: Fetch notifications from API
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  
+  useEffect(() => {
+    // TODO: Fetch notifications from API
+    setNotifications([]);
+  }, []);
 
-  // Exchange rates (mock)
-  const exchangeRates = {
-    SAR: { YER: 250, USD: 0.27 },
-    YER: { SAR: 0.004, USD: 0.0011 },
-    USD: { SAR: 3.75, YER: 937.5 }
-  };
+  // TODO: Fetch exchange rates from API
+  const [exchangeRates, setExchangeRates] = useState({
+    SAR: { YER: 0, USD: 0 },
+    YER: { SAR: 0, USD: 0 },
+    USD: { SAR: 0, YER: 0 }
+  });
+  
+  useEffect(() => {
+    // TODO: Fetch exchange rates from API
+    // For now, use empty rates
+  }, []);
 
-  // Collect all debts
+  // Collect all debts from subscriptions
   const allDebts: Debt[] = subscriptions
     .flatMap(sub => sub.debts || [])
     .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());

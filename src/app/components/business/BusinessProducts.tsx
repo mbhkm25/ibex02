@@ -31,6 +31,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
+import { ProductImages } from './ProductImages';
 
 interface Product {
   id: string;
@@ -654,6 +655,13 @@ export function BusinessProducts() {
                   </div>
                 </div>
               </div>
+              
+              {/* Product Images Section */}
+              {businessId && (
+                <div className="pt-4 border-t border-gray-200">
+                  <ProductImages productId={selectedProduct.id} businessId={businessId} />
+                </div>
+              )}
             </div>
           )}
           <DialogFooter className="flex-col sm:flex-row gap-2">

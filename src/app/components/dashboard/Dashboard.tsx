@@ -13,18 +13,22 @@ import {
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Progress } from '../ui/progress';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../layout/DashboardLayout';
 
 export function Dashboard() {
   const navigate = useNavigate();
 
-  // Mock Data relevant to our app
-  const recentTransactions = [
-    { id: '1', store: 'سوبر ماركت الرحمة', amount: -125, type: 'مشتريات', date: 'اليوم، 2:30 م', icon: <ShoppingBag className="w-4 h-4" /> },
-    { id: '2', store: 'مطعم البيك', amount: -45, type: 'مشتريات', date: 'أمس، 7:15 م', icon: <Utensils className="w-4 h-4" /> },
-    { id: '3', store: 'شحن رصيد', amount: +200, type: 'إيداع', date: '2 يناير، 11:00 ص', icon: <Wallet className="w-4 h-4" /> },
-  ];
+  // TODO: Fetch recent transactions from API
+  const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    // TODO: Fetch recent transactions from API
+    setLoading(false);
+    setRecentTransactions([]);
+  }, []);
 
   return (
     <DashboardLayout 

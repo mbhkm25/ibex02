@@ -63,9 +63,12 @@ import {
   canAdminActivate,
   getStatusMessage
 } from '../../utils/serviceRequestStateMachine';
-import { activateBusinessFromRequest, listServiceRequests } from '../../api/adminServiceRequests';
+import { activateBusinessFromRequest } from '../../api/adminServiceRequests';
+import { queryData } from '../../services/dataApi';
+import { useAuth } from '../../contexts/AuthContext';
 
 export function AdminServiceRequests() {
+  const { logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
   const [showRequestDetails, setShowRequestDetails] = useState(false);
@@ -73,22 +76,43 @@ export function AdminServiceRequests() {
   const [rejectionReason, setRejectionReason] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'submitted' | 'reviewed' | 'approved' | 'rejected'>('all');
   
-  // State for real data from API
+  // State for real data from Data API
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch service requests from API
+  // Fetch service requests from Neon Data API
+  // Note: Admin needs to see all requests, but RLS will filter by user_id
+  // TODO: Add admin RLS policy to allow admins to see all requests
   useEffect(() => {
     const fetchRequests = async () => {
       try {
         setLoading(true);
         setError(null);
-        const status = activeTab === 'all' ? undefined : activeTab;
-        const result = await listServiceRequests({ status });
-        setRequests(result.requests);
+        
+        // Build filter based on active tab
+        const filter: Record<string, any> = {};
+        if (activeTab !== 'all') {
+          filter.status = activeTab;
+        }
+        
+        // Query service_requests table via Data API
+        const data = await queryData<ServiceRequest>('service_requests', {
+          select: 'id,status,business_model,business_name,description,rejection_reason,user_id,created_at,updated_at',
+          filter,
+          order: 'created_at.desc',
+        });
+        
+        setRequests(data || []);
       } catch (err: any) {
         console.error('Failed to fetch service requests:', err);
+        
+        // Handle 401 - logout user
+        if (err.message.includes('Not authenticated') || err.message.includes('Session expired')) {
+          logout();
+          return;
+        }
+        
         setError(err.message || 'فشل تحميل طلبات الخدمة');
         setRequests([]);
       } finally {
@@ -97,7 +121,7 @@ export function AdminServiceRequests() {
     };
 
     fetchRequests();
-  }, [activeTab]);
+  }, [activeTab, logout]);
 
   // Filter requests by search query (client-side filtering for now)
   const filteredRequests = requests.filter(request => {

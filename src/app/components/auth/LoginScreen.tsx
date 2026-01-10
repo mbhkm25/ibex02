@@ -5,6 +5,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { useAuth } from '../../contexts/AuthContext';
+import { toast } from 'sonner';
 
 export function LoginScreen() {
   const navigate = useNavigate();

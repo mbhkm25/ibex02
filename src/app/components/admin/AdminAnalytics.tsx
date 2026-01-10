@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   BarChart3,
   TrendingUp,
@@ -21,8 +21,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 export function AdminAnalytics() {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
 
-  // Mock Data
-  const analytics = {
+  // TODO: Fetch analytics from API
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    // TODO: Fetch analytics from API based on timeRange
+    setLoading(false);
+    setAnalytics(null);
+  }, [timeRange]);
+
+  // Empty analytics - no mock data
+  const emptyAnalytics = {
     revenue: {
       total: 1250000,
       change: +15.5,
@@ -65,13 +75,13 @@ export function AdminAnalytics() {
     }
   };
 
-  const topBusinesses = [
-    { id: '1', name: 'سوبر ماركت الرحمة', revenue: 125000, growth: +12.5 },
-    { id: '2', name: 'مطعم البيك', revenue: 89000, growth: +8.3 },
-    { id: '3', name: 'صالون التجميل', revenue: 67000, growth: +15.2 },
-    { id: '4', name: 'صيدلية النهدي', revenue: 54000, growth: +5.7 },
-    { id: '5', name: 'محل الأجهزة', revenue: 42000, growth: -2.1 },
-  ];
+  // TODO: Fetch top businesses from API
+  const [topBusinesses, setTopBusinesses] = useState<any[]>([]);
+  
+  useEffect(() => {
+    // TODO: Fetch top businesses from API
+    setTopBusinesses([]);
+  }, [timeRange]);
 
   const StatCard = ({ icon, title, value, change, trend }: any) => (
     <Card className="p-4 bg-white border border-gray-200 rounded-xl">

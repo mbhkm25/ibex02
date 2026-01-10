@@ -16,25 +16,11 @@ export function QRScanner() {
   const handleScanComplete = () => {
     setScanning(false);
     
-    // Simulate store QR scan result
+    // TODO: Parse QR data and fetch store data from API
     // In real app, this would parse QR data containing: storeId
-    setTimeout(() => {
-      const mockStoreData = {
-        id: 'store-123',
-        name: 'سوبر ماركت الرحمة',
-        description: 'مواد غذائية طازجة وخضروات يومية بأسعار مناسبة',
-        address: 'حي النسيم، شارع الملك فهد',
-        rating: 4.8,
-        subscribers: 245,
-        category: 'بقالة',
-        phone: '+966 5XXXXXXXX',
-        image: 'https://via.placeholder.com/300x200?text=Store'
-      };
-      
-      setStoreData(mockStoreData);
-      setShowStoreDetails(true);
-      toast.success('تم قراءة كود المتجر بنجاح');
-    }, 1500);
+    // Then fetch store data from API
+    // For now, show error or empty state
+    toast.error('يجب ربط هذا المكون بـ API لجلب بيانات المتجر');
   };
 
   const handleSubscribe = () => {

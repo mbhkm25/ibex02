@@ -108,8 +108,8 @@ export function DashboardLayout({ children, title, subtitle }: DashboardLayoutPr
         <NavItem 
           icon={<QrCode />} 
           label="مسح QR" 
-          active={isActive('/scan')} 
-          onClick={() => navigate('/scan/store')} 
+          active={isActive('/scan/qr') || isActive('/scan')} 
+          onClick={() => navigate('/scan/qr')} 
         />
         <NavItem 
           icon={<Settings />} 

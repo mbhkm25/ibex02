@@ -79,8 +79,21 @@ export function TransactionHistory() {
 
   const storeData = getStoreData(storeId);
 
-  // Mock data
-  const transactions: Transaction[] = [
+  // TODO: Fetch transactions from API
+  // This feature requires backend API
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // TODO: Fetch transactions from API based on storeId
+    // For now, show empty state
+    setLoading(false);
+    setTransactions([]);
+  }, [storeId]);
+
+  // Empty transactions array - no mock data
+  const emptyTransactions: Transaction[] = [
     { 
       id: '1', 
       type: 'purchase', 
@@ -182,6 +195,9 @@ export function TransactionHistory() {
       status: 'failed'
     }
   ];
+
+  // Use empty array - no mock data
+  const actualTransactions: Transaction[] = [];
 
   const filteredTransactions = transactions.filter(t => {
     const matchesSearch = t.description.includes(searchQuery) || 

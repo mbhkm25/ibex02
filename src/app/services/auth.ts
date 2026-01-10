@@ -142,31 +142,55 @@ export function isAdmin(): boolean {
 
 /**
  * Register new user with Neon Auth
+ * 
+ * TODO: Replace with real Neon Auth endpoint when available
+ * For now, using mock registration for development
  */
 export async function register(email: string, password: string, phone?: string): Promise<AuthTokens> {
-  const response = await fetch(`${NEON_AUTH_BASE}/register`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      email,
-      password,
-      phone,
-    }),
-  });
+  // TODO: Replace with real Neon Auth endpoint
+  // For MVP, using mock registration
+  // In production, this should call Neon Auth registration endpoints
+  
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Registration failed' }));
-    throw new Error(error.message || 'فشل التسجيل');
+  // Mock registration for development
+  const userId = `user_${Date.now()}`;
+  const roles = ['customer'];
+  const mockToken = generateMockJWT(userId, email, roles);
+
+  // Try to call real endpoint (will fail gracefully)
+  try {
+    const response = await fetch(`${NEON_AUTH_BASE}/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        phone,
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const tokens: AuthTokens = {
+        accessToken: data.access_token || data.token,
+        refreshToken: data.refresh_token,
+        expiresAt: Date.now() + (data.expires_in || 3600) * 1000,
+      };
+      storeTokens(tokens);
+      return tokens;
+    }
+  } catch (error) {
+    // Fall through to mock registration
   }
 
-  const data = await response.json();
-  
   const tokens: AuthTokens = {
-    accessToken: data.access_token || data.token,
-    refreshToken: data.refresh_token,
-    expiresAt: Date.now() + (data.expires_in || 3600) * 1000,
+    accessToken: mockToken,
+    refreshToken: `refresh_${userId}`,
+    expiresAt: Date.now() + (3600 * 1000), // 1 hour
   };
 
   storeTokens(tokens);
@@ -175,34 +199,100 @@ export async function register(email: string, password: string, phone?: string):
 
 /**
  * Login with Neon Auth
+ * 
+ * TODO: Replace with real Neon Auth endpoint when available
+ * For now, using mock authentication for development
  */
 export async function login(email: string, password: string): Promise<AuthTokens> {
-  const response = await fetch(`${NEON_AUTH_BASE}/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      email,
-      password,
-    }),
-  });
+  // TODO: Replace with real Neon Auth endpoint
+  // For MVP, using mock authentication
+  // In production, this should call Neon Auth OAuth/OIDC endpoints
+  
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Login failed' }));
-    throw new Error(error.message || 'فشل تسجيل الدخول');
+  // Mock authentication for development
+  // Admin user: admin@example.com / admin123
+  // Regular user: user@example.com / user123
+  let mockToken: string;
+  let userId: string;
+  let roles: string[];
+
+  if (email === 'admin@example.com' && password === 'admin123') {
+    userId = 'admin_user_id_123';
+    roles = ['admin'];
+    mockToken = generateMockJWT(userId, email, roles);
+  } else if (email === 'user@example.com' && password === 'user123') {
+    userId = 'user_id_456';
+    roles = ['customer'];
+    mockToken = generateMockJWT(userId, email, roles);
+  } else {
+    // Try to call real endpoint (will fail gracefully)
+    try {
+      const response = await fetch(`${NEON_AUTH_BASE}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const tokens: AuthTokens = {
+          accessToken: data.access_token || data.token,
+          refreshToken: data.refresh_token,
+          expiresAt: Date.now() + (data.expires_in || 3600) * 1000,
+        };
+        storeTokens(tokens);
+        return tokens;
+      }
+    } catch (error) {
+      // Fall through to error
+    }
+
+    throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
   }
 
-  const data = await response.json();
-  
   const tokens: AuthTokens = {
-    accessToken: data.access_token || data.token,
-    refreshToken: data.refresh_token,
-    expiresAt: Date.now() + (data.expires_in || 3600) * 1000,
+    accessToken: mockToken,
+    refreshToken: `refresh_${userId}`,
+    expiresAt: Date.now() + (3600 * 1000), // 1 hour
   };
 
   storeTokens(tokens);
   return tokens;
+}
+
+/**
+ * Generate mock JWT for development
+ * Format: header.payload.signature (base64 encoded)
+ */
+function generateMockJWT(userId: string, email: string, roles: string[]): string {
+  const header = {
+    alg: 'HS256',
+    typ: 'JWT'
+  };
+
+  const payload = {
+    sub: userId,
+    email: email,
+    roles: roles,
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour
+    iss: NEON_AUTH_ISSUER,
+    aud: 'any'
+  };
+
+  // Base64 encode (without actual signature for mock)
+  const encodedHeader = btoa(JSON.stringify(header)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const encodedPayload = btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const signature = 'mock_signature_for_development_only';
+
+  return `${encodedHeader}.${encodedPayload}.${signature}`;
 }
 
 /**
@@ -214,6 +304,8 @@ export function logout(): void {
 
 /**
  * Refresh access token
+ * 
+ * TODO: Replace with real Neon Auth refresh endpoint when available
  */
 export async function refreshAccessToken(): Promise<AuthTokens> {
   const refreshToken = getRefreshToken();
@@ -221,27 +313,52 @@ export async function refreshAccessToken(): Promise<AuthTokens> {
     throw new Error('No refresh token available');
   }
 
-  const response = await fetch(`${NEON_AUTH_BASE}/refresh`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      refresh_token: refreshToken,
-    }),
-  });
+  // Try to call real endpoint first
+  try {
+    const response = await fetch(`${NEON_AUTH_BASE}/refresh`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        refresh_token: refreshToken,
+      }),
+    });
 
-  if (!response.ok) {
-    clearTokens();
-    throw new Error('Token refresh failed');
+    if (response.ok) {
+      const data = await response.json();
+      const tokens: AuthTokens = {
+        accessToken: data.access_token || data.token,
+        refreshToken: data.refresh_token || refreshToken,
+        expiresAt: Date.now() + (data.expires_in || 3600) * 1000,
+      };
+      storeTokens(tokens);
+      return tokens;
+    }
+  } catch (error) {
+    // Fall through to mock refresh
   }
 
-  const data = await response.json();
+  // Mock refresh: decode current token and generate new one
+  const currentToken = getAccessToken();
+  if (!currentToken) {
+    clearTokens();
+    throw new Error('No access token available');
+  }
+
+  const decoded = decodeJWT(currentToken);
+  if (!decoded) {
+    clearTokens();
+    throw new Error('Invalid token');
+  }
+
+  // Generate new token with extended expiration
+  const newToken = generateMockJWT(decoded.sub, decoded.email, decoded.roles || []);
   
   const tokens: AuthTokens = {
-    accessToken: data.access_token || data.token,
-    refreshToken: data.refresh_token || refreshToken,
-    expiresAt: Date.now() + (data.expires_in || 3600) * 1000,
+    accessToken: newToken,
+    refreshToken: refreshToken,
+    expiresAt: Date.now() + (3600 * 1000), // 1 hour
   };
 
   storeTokens(tokens);

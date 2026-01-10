@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Users, 
   Search, 
@@ -41,13 +41,16 @@ export function AdminUsers() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showUserDetails, setShowUserDetails] = useState(false);
 
-  // Mock Data
-  const users: User[] = [
-    { id: '1', name: 'أحمد محمد', phone: '+966501234567', email: 'ahmed@example.com', role: 'customer', status: 'active', joinDate: '2024-01-15', lastActive: 'اليوم' },
-    { id: '2', name: 'فاطمة علي', phone: '+966507654321', role: 'merchant', status: 'active', joinDate: '2024-01-10', lastActive: 'أمس', businessesCount: 2 },
-    { id: '3', name: 'خالد سعيد', phone: '+966509876543', role: 'customer', status: 'suspended', joinDate: '2023-12-20', lastActive: 'منذ 5 أيام' },
-    { id: '4', name: 'سارة أحمد', phone: '+966501112233', email: 'sara@example.com', role: 'merchant', status: 'active', joinDate: '2024-01-05', lastActive: 'اليوم', businessesCount: 1 },
-  ];
+  // TODO: Fetch users from API
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // TODO: Fetch users from API
+    setLoading(false);
+    setUsers([]);
+  }, []);
 
   const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

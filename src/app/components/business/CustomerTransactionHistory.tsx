@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   ChevronLeft,
@@ -67,16 +67,26 @@ export function CustomerTransactionHistory() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Mock data
-  const customer = {
-    id: customerId || '1',
-    name: 'أحمد محمد',
-    phone: '+966501234567',
-    balance: 250,
-    currency: 'SAR' as const
-  };
+  // TODO: Fetch customer data from API
+  const [customer, setCustomer] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    // TODO: Fetch customer data from API
+    setLoading(false);
+    setCustomer(null);
+  }, [customerId, businessId]);
 
-  const transactions: Transaction[] = [
+  // TODO: Fetch transactions from API
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  
+  useEffect(() => {
+    // TODO: Fetch transactions from API
+    setTransactions([]);
+  }, [customerId, businessId]);
+
+  // Empty transactions - no mock data
+  const emptyTransactions: Transaction[] = [
     { 
       id: '1', 
       type: 'purchase', 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Package, 
   Plus, 
@@ -9,7 +9,8 @@ import {
   CheckCircle,
   XCircle,
   Search,
-  Filter
+  Filter,
+  AlertCircle
 } from 'lucide-react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
@@ -57,49 +58,18 @@ export function AdminPackages() {
   });
   const [newFeature, setNewFeature] = useState('');
 
-  // Mock Data
-  const packages: SubscriptionPackage[] = [
-    {
-      id: '1',
-      name: 'باقة أساسية',
-      description: 'مناسبة للمتاجر الصغيرة',
-      price: 500,
-      currency: 'SAR',
-      billingCycle: 'monthly',
-      features: ['حتى 100 عميل', 'حتى 500 منتج', 'معاملات غير محدودة', 'دعم فني'],
-      maxCustomers: 100,
-      maxProducts: 500,
-      status: 'active',
-      subscribersCount: 45,
-      createdAt: '2024-01-01'
-    },
-    {
-      id: '2',
-      name: 'باقة متوسطة',
-      description: 'مناسبة للمتاجر المتوسطة',
-      price: 1000,
-      currency: 'SAR',
-      billingCycle: 'monthly',
-      features: ['حتى 500 عميل', 'حتى 2000 منتج', 'معاملات غير محدودة', 'دعم فني أولوية', 'تقارير متقدمة'],
-      maxCustomers: 500,
-      maxProducts: 2000,
-      status: 'active',
-      subscribersCount: 23,
-      createdAt: '2024-01-01'
-    },
-    {
-      id: '3',
-      name: 'باقة احترافية',
-      description: 'مناسبة للمتاجر الكبيرة',
-      price: 2000,
-      currency: 'SAR',
-      billingCycle: 'monthly',
-      features: ['عملاء غير محدودين', 'منتجات غير محدودة', 'معاملات غير محدودة', 'دعم فني 24/7', 'تقارير متقدمة', 'API مخصص'],
-      status: 'active',
-      subscribersCount: 8,
-      createdAt: '2024-01-01'
-    },
-  ];
+  // TODO: Fetch packages from API
+  // This feature requires backend API
+  const [packages, setPackages] = useState<SubscriptionPackage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // TODO: Fetch packages from API
+    // For now, show empty state
+    setLoading(false);
+    setPackages([]);
+  }, []);
 
   const filteredPackages = packages.filter(pkg => 
     pkg.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -244,7 +214,52 @@ export function AdminPackages() {
         </div>
 
         {/* Packages Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-3"></div>
+              <p className="text-sm text-gray-600">جاري التحميل...</p>
+            </div>
+          </div>
+        ) : error ? (
+          <Card className="p-8 border-2 border-red-200 rounded-xl bg-red-50 text-center">
+            <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-3" />
+            <h3 className="text-lg font-black text-red-900 mb-2">خطأ في تحميل البيانات</h3>
+            <p className="text-sm text-red-700">{error}</p>
+          </Card>
+        ) : filteredPackages.length === 0 ? (
+          <Card className="p-8 border-2 border-gray-200 rounded-xl bg-white text-center">
+            <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-black text-gray-900 mb-2">لا توجد باقات</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              لم يتم العثور على أي باقات اشتراك.<br />
+              أضف باقة جديدة للبدء.
+            </p>
+            <Button
+              onClick={() => {
+                setSelectedPackage(null);
+                setFormData({
+                  name: '',
+                  description: '',
+                  price: '',
+                  currency: 'SAR',
+                  billingCycle: 'monthly',
+                  features: [],
+                  maxCustomers: '',
+                  maxProducts: '',
+                  maxTransactions: '',
+                  status: 'active'
+                });
+                setShowAddDialog(true);
+              }}
+              className="bg-gray-900 hover:bg-gray-800 text-white rounded-xl h-11 px-6 font-black"
+            >
+              <Plus className="w-4 h-4 ml-2" />
+              إضافة باقة جديدة
+            </Button>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredPackages.map((pkg) => (
             <Card key={pkg.id} className="p-5 bg-white border border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
               <div className="flex items-start justify-between mb-4">
@@ -324,7 +339,8 @@ export function AdminPackages() {
               </div>
             </Card>
           ))}
-        </div>
+          </div>
+        )}
 
         {/* Add/Edit Dialog */}
         <Dialog open={showAddDialog || showEditDialog} onOpenChange={(open) => {

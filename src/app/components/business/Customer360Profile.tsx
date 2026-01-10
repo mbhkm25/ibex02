@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ChevronLeft,
@@ -69,30 +69,27 @@ export function Customer360Profile() {
   const [selectedDepositRequest, setSelectedDepositRequest] = useState<any | null>(null);
   const [showDepositDetails, setShowDepositDetails] = useState(false);
 
-  // Mock data - Customer Info
-  const customer = {
-    id: customerId || '1',
-    name: 'أحمد محمد',
-    phone: '+966501234567',
-    email: 'ahmed@example.com',
-    address: 'حي النسيم، شارع الملك فهد، الرياض',
-    joinDate: '2023-06-15',
-    lastActive: 'اليوم، 2:30 م',
-    balance: 250,
-    creditStatus: 'نقدي' as 'نقدي' | 'آجل' | 'مقيد',
-    creditLimit: 0,
-    category: 'regular',
-    categoryName: 'عميل عادي',
-    rating: 4.5,
-    totalOrders: 45,
-    totalSpent: 12500,
-    averageOrderValue: 278,
-    lastOrderDate: 'اليوم، 2:30 م',
-    isActive: true,
-  };
+  // TODO: Fetch customer data from API
+  // This feature requires backend API
+  const [customer, setCustomer] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - Timeline Events
-  const timelineEvents: TimelineEvent[] = [
+  useEffect(() => {
+    // TODO: Fetch customer data from API
+    // For now, show empty state
+    setLoading(false);
+  }, [customerId, businessId]);
+
+  // TODO: Fetch timeline events from API
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
+  
+  useEffect(() => {
+    // TODO: Fetch timeline events from API
+    setTimelineEvents([]);
+  }, [customerId, businessId]);
+
+  // Empty timeline events array - no mock data
+  const emptyTimelineEvents: TimelineEvent[] = [
     {
       id: '1',
       type: 'transaction',
@@ -161,68 +158,37 @@ export function Customer360Profile() {
     },
   ];
 
-  // Mock data - Private Notes
-  const privateNotes: PrivateNote[] = [
-    {
-      id: '1',
-      text: 'العميل يفضل التواصل مساءً بعد الساعة 7',
-      createdAt: '2024-01-10',
-      createdBy: 'محمد التاجر'
-    },
-    {
-      id: '2',
-      text: 'طلب عدم الاتصال في أوقات الصلاة',
-      createdAt: '2024-01-05',
-      createdBy: 'محمد التاجر'
-    },
-    {
-      id: '3',
-      text: 'عميل ممتاز - يدفع دائماً في الوقت المحدد',
-      createdAt: '2023-12-20',
-      createdBy: 'محمد التاجر'
-    },
-  ];
+  // TODO: Fetch private notes from API
+  const [privateNotes, setPrivateNotes] = useState<PrivateNote[]>([]);
+  
+  useEffect(() => {
+    // TODO: Fetch private notes from API
+    setPrivateNotes([]);
+  }, [customerId, businessId]);
 
-  // Mock data - Recent Transactions
-  const recentTransactions = [
-    { id: '1', type: 'purchase', amount: -45, date: 'اليوم، 2:30 م', note: 'شراء مواد غذائية' },
-    { id: '2', type: 'topup', amount: +300, date: 'أمس، 11:15 ص', note: 'إضافة رصيد' },
-    { id: '3', type: 'purchase', amount: -50, date: '2 يناير، 4:20 م', note: 'شراء' },
-  ];
+  // TODO: Fetch recent transactions from API
+  const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
+  
+  useEffect(() => {
+    // TODO: Fetch recent transactions from API
+    setRecentTransactions([]);
+  }, [customerId, businessId]);
 
-  // Mock data - Recent Orders
-  const recentOrders = [
-    { id: '#1234', date: 'اليوم، 2:30 م', amount: 250, status: 'مكتمل', items: 5 },
-    { id: '#1230', date: 'أمس، 7:15 م', amount: 180, status: 'مكتمل', items: 3 },
-    { id: '#1225', date: '3 يناير', amount: 320, status: 'مكتمل', items: 8 },
-  ];
+  // TODO: Fetch recent orders from API
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  
+  useEffect(() => {
+    // TODO: Fetch recent orders from API
+    setRecentOrders([]);
+  }, [customerId, businessId]);
 
-  // Mock data - Deposit Requests for this customer
-  const customerDepositRequests = [
-    {
-      id: 'dep-1',
-      bankName: 'البنك الأهلي',
-      accountNumber: 'SA1234567890123456789012',
-      referenceNumber: 'REF123456789',
-      amount: 500,
-      currency: 'SAR',
-      status: 'pending',
-      createdAt: 'اليوم، 10:30 ص',
-      receiptUrl: null
-    },
-    {
-      id: 'dep-2',
-      bankName: 'STC Pay',
-      accountNumber: '0501234567',
-      referenceNumber: 'REF987654321',
-      amount: 300,
-      currency: 'SAR',
-      status: 'approved',
-      createdAt: 'أمس، 3:45 م',
-      reviewedAt: 'أمس، 4:00 م',
-      receiptUrl: null
-    },
-  ];
+  // TODO: Fetch deposit requests from API
+  const [customerDepositRequests, setCustomerDepositRequests] = useState<any[]>([]);
+  
+  useEffect(() => {
+    // TODO: Fetch deposit requests from API
+    setCustomerDepositRequests([]);
+  }, [customerId, businessId]);
 
   const pendingDeposits = customerDepositRequests.filter(d => d.status === 'pending');
 
@@ -234,6 +200,57 @@ export function Customer360Profile() {
       default: return 'ر.س';
     }
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-3"></div>
+          <p className="text-sm text-gray-600">جاري التحميل...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show empty state if no customer
+  if (!customer) {
+    return (
+      <div className="min-h-screen bg-gray-50" dir="rtl">
+        <header className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm">
+          <div className="flex items-center gap-3 p-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(`/business/${businessId}/manage`)}
+              className="h-9 w-9 rounded-xl"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg font-black text-gray-900 truncate">ملف العميل</h1>
+            </div>
+          </div>
+        </header>
+        <main className="p-4">
+          <Card className="p-8 border-2 border-gray-200 rounded-xl bg-white text-center">
+            <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-xl font-black text-gray-900 mb-2">العميل غير موجود</h2>
+            <p className="text-sm text-gray-600 mb-6">
+              لم يتم العثور على بيانات العميل.<br />
+              يرجى التحقق من معرف العميل.
+            </p>
+            <Button
+              onClick={() => navigate(`/business/${businessId}/manage`)}
+              className="bg-gray-900 hover:bg-gray-800 text-white rounded-xl h-11 px-6 font-black"
+            >
+              العودة لإدارة العمل
+            </Button>
+          </Card>
+        </main>
+      </div>
+    );
+  }
 
   const handleAddNote = () => {
     if (!newNote.trim()) {
@@ -461,7 +478,13 @@ export function Customer360Profile() {
                     عرض الكل
                   </Button>
                 </div>
-                <div className="space-y-2">
+                {recentTransactions.length === 0 ? (
+                  <div className="text-center py-6">
+                    <DollarSign className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                    <p className="text-xs text-gray-500">لا توجد عمليات حديثة</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
                   {recentTransactions.slice(0, 3).map((transaction) => {
                     const isPositive = transaction.amount > 0;
                     return (
@@ -487,13 +510,20 @@ export function Customer360Profile() {
                       </div>
                     );
                   })}
-                </div>
+                  </div>
+                )}
               </Card>
 
               {/* Recent Orders */}
               <Card className="p-4 bg-white border border-gray-200 rounded-xl">
                 <h3 className="text-sm font-black text-gray-900 mb-3">آخر الطلبات</h3>
-                <div className="space-y-2">
+                {recentOrders.length === 0 ? (
+                  <div className="text-center py-6">
+                    <Package className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                    <p className="text-xs text-gray-500">لا توجد طلبات حديثة</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
                   {recentOrders.map((order) => (
                     <div key={order.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
                       <div>
@@ -508,7 +538,8 @@ export function Customer360Profile() {
                       </div>
                     </div>
                   ))}
-                </div>
+                  </div>
+                )}
               </Card>
             </TabsContent>
 
@@ -516,7 +547,14 @@ export function Customer360Profile() {
             <TabsContent value="timeline" className="space-y-3">
               <Card className="p-4 bg-white border border-gray-200 rounded-xl">
                 <h3 className="text-sm font-black text-gray-900 mb-3">سجل التفاعلات</h3>
-                <div className="space-y-3">
+                {timelineEvents.length === 0 ? (
+                  <div className="text-center py-8">
+                    <History className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">لا توجد تفاعلات</p>
+                    <p className="text-xs text-gray-400 mt-1">سيتم عرض سجل التفاعلات هنا عند توفر البيانات</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
                   {timelineEvents.map((event, index) => {
                     const Icon = event.icon;
                     const showDate = index === 0 || timelineEvents[index - 1].date !== event.date;
@@ -546,7 +584,8 @@ export function Customer360Profile() {
                       </React.Fragment>
                     );
                   })}
-                </div>
+                  </div>
+                )}
               </Card>
             </TabsContent>
 
