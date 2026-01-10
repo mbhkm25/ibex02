@@ -18,7 +18,7 @@
  */
 
 import jwt from 'jsonwebtoken';
-import jwksClient from 'jwks-rsa';
+import jwksClient, { SigningKey } from 'jwks-rsa';
 
 const NEON_AUTH_ISSUER = 'https://ep-flat-hall-a7h51kjz.neonauth.ap-southeast-2.aws.neon.tech/neondb/auth';
 const JWKS_URI = `${NEON_AUTH_ISSUER}/.well-known/jwks.json`;
@@ -40,8 +40,8 @@ const client = jwksClient({
 /**
  * Get signing key from JWKS
  */
-function getKey(header: any, callback: any): void {
-  client.getSigningKey(header.kid, (err, key) => {
+function getKey(header: any, callback: (err: Error | null, key?: string) => void): void {
+  client.getSigningKey(header.kid, (err: Error | null, key: SigningKey | undefined) => {
     if (err) {
       callback(err);
       return;

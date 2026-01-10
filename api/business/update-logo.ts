@@ -142,7 +142,7 @@ export default async function handler(
 
   try {
     // STEP 1: Validate authentication
-    let user;
+    let user: { id: string; [key: string]: any };
     try {
       user = await requireAuth(req);
       console.log(`[Update Logo] Authenticated user: ${user.id}`);

@@ -50,7 +50,7 @@ type VercelResponse = {
   json: (data: any) => void;
   send: (data: any) => void;
 };
-import { query, transaction } from '../_db';
+import { transaction } from '../_db';
 import { requireAdmin } from '../_auth';
 
 /**
@@ -82,7 +82,7 @@ function validateAdminSecret(req: VercelRequest): boolean {
   const expectedSecret = process.env.ADMIN_SECRET;
   if (!expectedSecret) return false;
   
-  const providedSecret = req.headers['x-admin-secret'];
+  const providedSecret = req.headers?.['x-admin-secret'];
   const secretValue = Array.isArray(providedSecret) 
     ? providedSecret[0] 
     : providedSecret;
@@ -103,9 +103,8 @@ export default async function handler(
   }
 
   // STEP 2: Validate admin authentication (JWT with admin role)
-  let adminUser;
   try {
-    adminUser = await requireAdmin(req);
+    await requireAdmin(req);
   } catch (error: any) {
     // Fallback to legacy admin secret for backward compatibility
     if (error.message.includes('UNAUTHORIZED') || error.message.includes('FORBIDDEN')) {

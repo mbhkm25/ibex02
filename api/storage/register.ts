@@ -54,7 +54,7 @@ function validateInput(body: any): { isValid: boolean; error?: string } {
     return { isValid: false, error: 'Request body is required' };
   }
 
-  const { object_key, bucket, mime_type, size, business_id, original_filename } = body;
+  const { object_key, bucket, mime_type, size, business_id } = body;
 
   if (!object_key) {
     return { isValid: false, error: 'object_key is required' };

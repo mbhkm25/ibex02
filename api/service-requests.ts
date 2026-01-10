@@ -50,7 +50,7 @@ export default async function handler(
   try {
     // TODO: Get userId from authentication token
     // For now, return empty array until authentication is implemented
-    const userId = req.headers['x-user-id'] as string | undefined;
+    const userId = req.headers?.['x-user-id'] as string | undefined;
     
     if (!userId) {
       // TODO: Return 401 when authentication is implemented

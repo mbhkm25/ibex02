@@ -46,7 +46,7 @@ function validateAdminSecret(req: VercelRequest): boolean {
     return false;
   }
   
-  const providedSecret = req.headers['x-admin-secret'];
+  const providedSecret = req.headers?.['x-admin-secret'];
   const secretValue = Array.isArray(providedSecret) 
     ? providedSecret[0] 
     : providedSecret;
