@@ -5,9 +5,12 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Card } from '../ui/card';
+import { useAuth } from '../../contexts/AuthContext';
+import { toast } from 'sonner';
 
 export function RegisterScreen() {
   const navigate = useNavigate();
+  const { register, isLoading } = useAuth();
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -17,10 +20,28 @@ export function RegisterScreen() {
     address: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Navigate to OTP screen
-    navigate('/otp', { state: { phone: formData.phone } });
+    
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('كلمات المرور غير متطابقة');
+      return;
+    }
+
+    // Validate password length
+    if (formData.password.length < 8) {
+      toast.error('كلمة المرور يجب أن تكون 8 أحرف على الأقل');
+      return;
+    }
+
+    try {
+      await register(formData.email, formData.password, formData.phone, formData.fullName);
+      // Navigation will happen in AuthContext
+    } catch (error: any) {
+      // Error is already handled in AuthContext
+      console.error('Registration failed:', error);
+    }
   };
 
   return (
@@ -110,8 +131,12 @@ export function RegisterScreen() {
             </div>
           </div>
 
-            <Button type="submit" className="w-full h-12 rounded-xl mt-4 text-base bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200">
-            متابعة
+            <Button 
+              type="submit" 
+              disabled={isLoading}
+              className="w-full h-12 rounded-xl mt-4 text-base bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+            {isLoading ? 'جاري إنشاء الحساب...' : 'إنشاء الحساب'}
           </Button>
             </form>
         </Card>

@@ -32,7 +32,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, phone?: string) => Promise<void>;
+  register: (email: string, password: string, phone?: string, fullName?: string) => Promise<void>;
   logout: () => void;
   refreshToken: () => Promise<void>;
 }
@@ -105,10 +105,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [navigate]);
 
-  const register = useCallback(async (email: string, password: string, phone?: string) => {
+  const register = useCallback(async (email: string, password: string, phone?: string, fullName?: string) => {
     try {
       setIsLoading(true);
-      await authRegister(email, password, phone);
+      await authRegister(email, password, phone, fullName);
       const currentUser = getCurrentUser();
       setUser(currentUser);
       toast.success('تم إنشاء الحساب بنجاح');

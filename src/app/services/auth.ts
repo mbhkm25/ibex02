@@ -143,25 +143,11 @@ export function isAdmin(): boolean {
 /**
  * Register new user with Neon Auth
  * 
- * TODO: Replace with real Neon Auth endpoint when available
- * For now, using mock registration for development
+ * Uses serverless endpoint /api/auth/register which proxies to Neon Auth
  */
-export async function register(email: string, password: string, phone?: string): Promise<AuthTokens> {
-  // TODO: Replace with real Neon Auth endpoint
-  // For MVP, using mock registration
-  // In production, this should call Neon Auth registration endpoints
-  
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-
-  // Mock registration for development
-  const userId = `user_${Date.now()}`;
-  const roles = ['customer'];
-  const mockToken = generateMockJWT(userId, email, roles);
-
-  // Try to call real endpoint (will fail gracefully)
+export async function register(email: string, password: string, phone?: string, fullName?: string): Promise<AuthTokens> {
   try {
-    const response = await fetch(`${NEON_AUTH_BASE}/register`, {
+    const response = await fetch('/api/auth/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -170,101 +156,76 @@ export async function register(email: string, password: string, phone?: string):
         email,
         password,
         phone,
+        fullName,
       }),
     });
 
-    if (response.ok) {
-      const data = await response.json();
-      const tokens: AuthTokens = {
-        accessToken: data.access_token || data.token,
-        refreshToken: data.refresh_token,
-        expiresAt: Date.now() + (data.expires_in || 3600) * 1000,
-      };
-      storeTokens(tokens);
-      return tokens;
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'فشل إنشاء الحساب' }));
+      throw new Error(errorData.message || 'فشل إنشاء الحساب. يرجى المحاولة مرة أخرى.');
     }
-  } catch (error) {
-    // Fall through to mock registration
+
+    const result = await response.json();
+    
+    if (!result.success || !result.data) {
+      throw new Error('استجابة غير صحيحة من الخادم');
+    }
+
+    const tokens: AuthTokens = {
+      accessToken: result.data.accessToken,
+      refreshToken: result.data.refreshToken,
+      expiresAt: result.data.expiresAt || Date.now() + 3600000,
+    };
+
+    storeTokens(tokens);
+    return tokens;
+  } catch (error: any) {
+    console.error('[Register] Error:', error);
+    throw error;
   }
-
-  const tokens: AuthTokens = {
-    accessToken: mockToken,
-    refreshToken: `refresh_${userId}`,
-    expiresAt: Date.now() + (3600 * 1000), // 1 hour
-  };
-
-  storeTokens(tokens);
-  return tokens;
 }
 
 /**
  * Login with Neon Auth
  * 
- * TODO: Replace with real Neon Auth endpoint when available
- * For now, using mock authentication for development
+ * Uses serverless endpoint /api/auth/login which proxies to Neon Auth
  */
 export async function login(email: string, password: string): Promise<AuthTokens> {
-  // TODO: Replace with real Neon Auth endpoint
-  // For MVP, using mock authentication
-  // In production, this should call Neon Auth OAuth/OIDC endpoints
-  
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
+  try {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        password,
+      }),
+    });
 
-  // Mock authentication for development
-  // Admin user: admin@example.com / admin123
-  // Regular user: user@example.com / user123
-  let mockToken: string;
-  let userId: string;
-  let roles: string[];
-
-  if (email === 'admin@example.com' && password === 'admin123') {
-    userId = 'admin_user_id_123';
-    roles = ['admin'];
-    mockToken = generateMockJWT(userId, email, roles);
-  } else if (email === 'user@example.com' && password === 'user123') {
-    userId = 'user_id_456';
-    roles = ['customer'];
-    mockToken = generateMockJWT(userId, email, roles);
-  } else {
-    // Try to call real endpoint (will fail gracefully)
-    try {
-      const response = await fetch(`${NEON_AUTH_BASE}/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const tokens: AuthTokens = {
-          accessToken: data.access_token || data.token,
-          refreshToken: data.refresh_token,
-          expiresAt: Date.now() + (data.expires_in || 3600) * 1000,
-        };
-        storeTokens(tokens);
-        return tokens;
-      }
-    } catch (error) {
-      // Fall through to error
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'فشل تسجيل الدخول' }));
+      throw new Error(errorData.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
     }
 
-    throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
+    const result = await response.json();
+    
+    if (!result.success || !result.data) {
+      throw new Error('استجابة غير صحيحة من الخادم');
+    }
+
+    const tokens: AuthTokens = {
+      accessToken: result.data.accessToken,
+      refreshToken: result.data.refreshToken,
+      expiresAt: result.data.expiresAt || Date.now() + 3600000,
+    };
+
+    storeTokens(tokens);
+    return tokens;
+  } catch (error: any) {
+    console.error('[Login] Error:', error);
+    throw error;
   }
-
-  const tokens: AuthTokens = {
-    accessToken: mockToken,
-    refreshToken: `refresh_${userId}`,
-    expiresAt: Date.now() + (3600 * 1000), // 1 hour
-  };
-
-  storeTokens(tokens);
-  return tokens;
 }
 
 /**
