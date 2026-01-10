@@ -72,7 +72,8 @@ export function ProductImages({ productId, businessId }: ProductImagesProps) {
         for (const img of productImages) {
           try {
             const authHeaders = getAuthHeader();
-            const response = await fetch(`/api/storage/download-url?file_id=${img.file_id}`, {
+            const response = await fetch(`/api/storage?action=download-url&file_id=${img.file_id}`, {
+              method: 'GET',
               headers: authHeaders,
             });
 
@@ -128,13 +129,14 @@ export function ProductImages({ productId, businessId }: ProductImagesProps) {
 
         // STEP 2: Add to product_images
         const authHeaders = getAuthHeader();
-        const addResponse = await fetch('/api/products/add-image', {
+        const addResponse = await fetch('/api/products', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             ...authHeaders,
           },
           body: JSON.stringify({
+            action: 'add-image',
             product_id: productId,
             file_id: uploadResult.id,
           }),
@@ -156,7 +158,8 @@ export function ProductImages({ productId, businessId }: ProductImagesProps) {
       for (const img of newImages) {
         try {
           const authHeaders = getAuthHeader();
-          const response = await fetch(`/api/storage/download-url?file_id=${img.file_id}`, {
+          const response = await fetch(`/api/storage?action=download-url&file_id=${img.file_id}`, {
+            method: 'GET',
             headers: authHeaders,
           });
 
@@ -191,13 +194,14 @@ export function ProductImages({ productId, businessId }: ProductImagesProps) {
 
     try {
       const authHeaders = getAuthHeader();
-      const response = await fetch('/api/products/remove-image', {
+      const response = await fetch('/api/products', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
           ...authHeaders,
         },
         body: JSON.stringify({
+          action: 'remove-image',
           image_id: imageId,
         }),
       });

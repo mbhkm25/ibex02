@@ -81,13 +81,14 @@ export async function uploadFile(options: UploadFileOptions): Promise<UploadFile
       throw new Error('Not authenticated. Please log in.');
     }
 
-    const uploadUrlResponse = await fetch('/api/storage/upload-url', {
+    const uploadUrlResponse = await fetch('/api/storage', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...authHeaders,
       },
       body: JSON.stringify({
+        action: 'upload-url',
         business_id: businessId,
         mime_type: file.type,
         file_size: file.size,
@@ -125,13 +126,14 @@ export async function uploadFile(options: UploadFileOptions): Promise<UploadFile
     }
 
     // STEP 3: Register file metadata in database
-    const registerResponse = await fetch('/api/storage/register', {
+    const registerResponse = await fetch('/api/storage', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...authHeaders,
       },
       body: JSON.stringify({
+        action: 'register',
         object_key: objectKey,
         bucket: bucket,
         mime_type: file.type,
@@ -166,8 +168,26 @@ export async function uploadFile(options: UploadFileOptions): Promise<UploadFile
  * @returns Download URL
  */
 export async function getFileUrl(fileId: string): Promise<string> {
-  // TODO: Implement signed download URL endpoint
-  // For now, return proxy URL
-  return `/api/storage/download/${fileId}`;
+  try {
+    const authHeaders = getAuthHeader();
+    if (!authHeaders.Authorization) {
+      throw new Error('Not authenticated. Please log in.');
+    }
+
+    const response = await fetch(`/api/storage?action=download-url&file_id=${fileId}`, {
+      method: 'GET',
+      headers: authHeaders,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to get download URL');
+    }
+
+    const data = await response.json();
+    return data.data.downloadUrl;
+  } catch (error: any) {
+    console.error('Failed to get file URL:', error);
+    throw error;
+  }
 }
 

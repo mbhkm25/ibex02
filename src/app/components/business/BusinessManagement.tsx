@@ -148,7 +148,8 @@ export function BusinessManagement() {
         // TODO: Fetch logo metadata via Data API
         // For now, we'll use a serverless endpoint to get signed URL
         const authHeaders = getAuthHeader();
-        const response = await fetch(`/api/storage/download-url?file_id=${business.logo_file_id}`, {
+        const response = await fetch(`/api/storage?action=download-url&file_id=${business.logo_file_id}`, {
+          method: 'GET',
           headers: authHeaders,
         });
         
@@ -222,7 +223,8 @@ export function BusinessManagement() {
       }));
       
       // STEP 4: Fetch new logo URL
-      const downloadResponse = await fetch(`/api/storage/download-url?file_id=${uploadResult.id}`, {
+      const downloadResponse = await fetch(`/api/storage?action=download-url&file_id=${uploadResult.id}`, {
+        method: 'GET',
         headers: authHeaders,
       });
       
