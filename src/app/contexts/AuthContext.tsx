@@ -3,7 +3,8 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { Loader2 } from 'lucide-react';
 
 export interface AuthUser {
-  id: string;
+  id: string; // Neon UUID
+  auth0Id?: string; // Auth0 sub
   email?: string;
   name?: string;
   picture?: string;
@@ -39,26 +40,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
-    if (isAuthenticated && auth0User) {
+    const initAuth = async () => {
+      if (isAuthenticated && auth0User) {
         // Map Auth0 user to our AuthUser structure
-        // Assuming roles are added to the token or user profile via namespace
-        const namespace = 'https://api.ibex.app/roles'; // Or generic 'roles' if added directly
+        const namespace = 'https://api.ibex.app/roles';
         const roles = (auth0User[namespace] as string[]) || (auth0User['roles'] as string[]) || [];
         
-        setUser({
-            id: auth0User.sub || '',
-            email: auth0User.email,
-            name: auth0User.name,
-            picture: auth0User.picture,
-            roles: roles,
-            email_verified: auth0User.email_verified,
-            sub: auth0User.sub,
-            ...auth0User
-        });
-    } else {
+        const newUser = {
+          id: auth0User.sub || '',
+          email: auth0User.email,
+          name: auth0User.name,
+          picture: auth0User.picture,
+          roles: roles,
+          email_verified: auth0User.email_verified,
+          sub: auth0User.sub,
+          ...auth0User
+        };
+        
+        setUser(newUser);
+
+        // Call Bootstrap Endpoint to sync user with Neon DB
+        try {
+          const token = await getAccessTokenSilently();
+          await fetch('/api/auth/bootstrap', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.ok && data.user) {
+              // Update user with Neon DB ID
+              setUser(prev => prev ? { 
+                ...prev, 
+                id: data.user.id, // Use Neon UUID as primary ID
+                auth0Id: prev.sub // Keep Auth0 ID reference
+              } : null);
+            }
+          });
+        } catch (err) {
+          console.error('Failed to bootstrap user:', err);
+        }
+      } else {
         setUser(null);
-    }
-  }, [isAuthenticated, auth0User]);
+      }
+    };
+
+    initAuth();
+  }, [isAuthenticated, auth0User, getAccessTokenSilently]);
 
   const login = async () => {
     await loginWithRedirect();

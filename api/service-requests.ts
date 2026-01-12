@@ -1,89 +1,58 @@
+import { VercelRequest, VercelResponse } from '@vercel/node';
+import { requireAuth } from './_auth';
+import { query } from './_db';
+
 /**
  * List User Service Requests - Serverless Function
  * 
- * Architecture: Vercel Serverless Function for listing user's service requests
- * 
- * Endpoint: GET /api/service-requests
- * 
- * Responsibilities:
- * 1. Validate user authentication (TODO: implement)
- * 2. Query service_requests for current user
- * 3. Return user's requests only
- * 
- * Security:
- * - User-only (enforced by authentication)
- * - Users can only see their own requests
- * - SQL injection protection (parameterized queries)
- * 
- * TODO: Implement user authentication
- * TODO: Get userId from auth token/session
+ * Architecture: BFF Pattern
+ * - Authenticates user via Auth0
+ * - Queries Database directly
+ * - Returns filtered results
  */
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Handle CORS
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
 
-// Vercel Serverless Function handler
-type VercelRequest = {
-  method?: string;
-  body?: any;
-  headers?: Record<string, string | string[] | undefined>;
-  query?: Record<string, string | string[]>;
-};
-
-type VercelResponse = {
-  status: (code: number) => VercelResponse;
-  json: (data: any) => void;
-  send: (data: any) => void;
-};
-
-import { query } from './_db';
-
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
-  // Only allow GET
   if (req.method !== 'GET') {
-    return res.status(405).json({ 
-      error: 'Method not allowed',
-      message: 'Only GET method is supported'
-    });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    // TODO: Get userId from authentication token
-    // For now, return empty array until authentication is implemented
-    const userId = req.headers?.['x-user-id'] as string | undefined;
-    
-    if (!userId) {
-      // TODO: Return 401 when authentication is implemented
-      // For now, return empty array
-      return res.status(200).json({
-        success: true,
-        data: {
-          requests: [],
-          total: 0,
-        }
-      });
-    }
+    // 1. Authentication
+    const user = await requireAuth(req);
 
-    // Query user's service requests
+    // 2. Query Database
+    // Note: We use auth0_sub (user.id) directly or link it to users table
+    // Assuming service_requests has user_id which matches auth0_sub or we join with users table
+    // If service_requests.user_id is UUID from users table, we need to look it up first.
+    // Based on previous steps, we sync users.
+    
+    // First, get internal user ID
+    const userResult = await query('SELECT id FROM users WHERE auth0_sub = $1', [user.id]);
+    if (userResult.rows.length === 0) {
+        // User not synced yet? Return empty
+        return res.status(200).json([]);
+    }
+    const internalUserId = userResult.rows[0].id;
+
     const result = await query(
-      'SELECT * FROM service_requests WHERE user_id = $1 ORDER BY created_at DESC',
-      [userId]
+      `SELECT id, status, business_model, business_name, description, rejection_reason, created_at, updated_at 
+       FROM service_requests 
+       WHERE user_id = $1 
+       ORDER BY created_at DESC`,
+      [internalUserId]
     );
 
-    return res.status(200).json({
-      success: true,
-      data: {
-        requests: result.rows,
-        total: result.rows.length,
-      }
-    });
+    // 3. Return Data
+    return res.status(200).json(result.rows);
 
   } catch (error: any) {
-    console.error('List user service requests error:', error);
-    return res.status(500).json({
-      error: 'INTERNAL_ERROR',
-      message: 'An unexpected error occurred while fetching service requests'
-    });
+    console.error('API Error:', error);
+    const status = error.message.includes('UNAUTHORIZED') ? 401 : 500;
+    return res.status(status).json({ error: error.message });
   }
 }
-

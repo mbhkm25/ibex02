@@ -17,7 +17,7 @@ import { Card } from '../ui/card';
 import { toast } from 'sonner';
 import { uploadFile } from '../../services/storage';
 import { useAuth } from '../../contexts/AuthContext';
-import { queryData } from '../../services/dataApi';
+import { apiFetch } from '../../services/apiClient';
 
 interface ProductImage {
   id: string;
@@ -56,23 +56,18 @@ export function ProductImages({ productId, businessId }: ProductImagesProps) {
         setLoading(true);
         setError(null);
 
-        // Fetch product_images via Data API
+        // Fetch product_images via BFF API
         const token = await getAccessToken();
-        const productImages = await queryData<ProductImage>(
-          'product_images',
-          {
-            select: 'id,product_id,file_id,sort_order,created_at',
-            filter: `product_id.eq.${productId}`,
-            order: 'sort_order.asc',
-          },
+        const productImages = await apiFetch<ProductImage[]>(
+          `/api/products?action=list-images&product_id=${productId}`,
           token
         );
 
-        setImages(productImages);
+        setImages(productImages || []);
 
         // Fetch file metadata and generate signed URLs
         const urls: Record<string, string> = {};
-        for (const img of productImages) {
+        for (const img of productImages || []) {
           try {
             const token = await getAccessToken();
             const response = await fetch(`/api/storage?action=download-url&file_id=${img.file_id}`, {

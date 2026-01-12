@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -26,11 +27,12 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, title, subtitle }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [canInstall, setCanInstall] = useState(false);
 
-  // Capture PWA install event (Web App Install Banner)
+  // Capture PWA install event
   useEffect(() => {
     const handler = (e: any) => {
       e.preventDefault();
@@ -68,13 +70,13 @@ export function DashboardLayout({ children, title, subtitle }: DashboardLayoutPr
   const NavContent = () => (
     <>
       <div className="flex items-center gap-3 mb-10 px-2">
-        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-          <Wallet className="w-6 h-6" />
+        <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white">
+          <Wallet className="w-5 h-5" />
         </div>
-        <span className="text-xl font-bold text-gray-800">محفظتي</span>
+        <span className="text-xl font-black text-gray-900">محفظتي</span>
       </div>
 
-      <nav className="space-y-2 flex-1">
+      <nav className="space-y-1 flex-1">
         <NavItem 
           icon={<LayoutDashboard />} 
           label="نظرة عامة" 
@@ -119,8 +121,8 @@ export function DashboardLayout({ children, title, subtitle }: DashboardLayoutPr
         />
       </nav>
 
-      <div className="mt-auto">
-         <Button variant="ghost" className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 gap-3" onClick={() => navigate('/login')}>
+      <div className="mt-auto pt-6 border-t border-gray-100">
+         <Button variant="ghost" className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 gap-3 font-medium h-12" onClick={() => logout()}>
            <LogOut className="w-5 h-5" />
            <span>تسجيل الخروج</span>
          </Button>
@@ -129,59 +131,62 @@ export function DashboardLayout({ children, title, subtitle }: DashboardLayoutPr
   );
 
   return (
-    <div className="flex min-h-screen bg-[#F8F9FA]" dir="rtl">
+    <div className="flex min-h-screen bg-[#FAFAFA]" dir="rtl">
       {/* Sidebar - Desktop */}
-      <aside className="w-64 bg-white border-l border-gray-100 hidden lg:flex flex-col p-4 lg:p-6 sticky top-0 h-screen">
+      <aside className="w-72 bg-white border-l border-gray-100 hidden lg:flex flex-col p-6 sticky top-0 h-screen shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-30">
         <NavContent />
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-y-auto">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-[1600px] mx-auto w-full">
             {/* Header */}
-            <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6 lg:mb-8">
-              <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+            <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+              <div className="flex items-center gap-3 w-full sm:w-auto">
                 {/* Mobile Menu Trigger */}
                 <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                   <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="lg:hidden">
-                      <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <Button variant="ghost" size="icon" className="lg:hidden h-10 w-10 rounded-xl bg-white border border-gray-200">
+                      <Menu className="w-5 h-5 text-gray-700" />
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="right" className="w-64 p-4 sm:p-6">
+                  <SheetContent side="right" className="w-72 p-6">
                     <NavContent />
                   </SheetContent>
                 </Sheet>
 
                 <div className="flex-1 sm:flex-initial">
-                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800">{title}</h1>
-                  <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1">{subtitle}</p>
+                  <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">{title}</h1>
+                  <p className="text-sm text-gray-500 font-medium mt-1">{subtitle}</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end">
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
                 {canInstall && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handleInstallClick}
-                    className="h-9 rounded-full border-2 border-gray-200 text-xs font-bold gap-1 hidden sm:inline-flex"
+                    className="h-10 rounded-xl border-2 border-gray-200 text-xs font-bold gap-2 hidden sm:inline-flex"
                   >
-                    <Download className="w-3.5 h-3.5 ml-1" />
+                    <Download className="w-4 h-4" />
                     تثبيت التطبيق
                   </Button>
                 )}
-                <Button variant="ghost" size="icon" className="rounded-full relative text-gray-500 hover:bg-gray-100 hidden sm:flex">
-                  <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <span className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hidden sm:flex relative">
+                  <Bell className="w-5 h-5" />
+                  <span className="absolute top-2 left-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                 </Button>
-                <div className="flex items-center gap-2 sm:gap-3 pl-2 border-r border-gray-200 mr-2">
+                
+                <div className="flex items-center gap-3 pr-2 sm:border-r border-gray-200 sm:mr-2">
                   <div className="text-left hidden sm:block">
-                    <p className="text-xs sm:text-sm font-semibold">أحمد محمد</p>
-                    <p className="text-[10px] sm:text-xs text-gray-400">عميل مميز</p>
+                    <p className="text-sm font-bold text-gray-900">{user?.name || 'مستخدم'}</p>
+                    <p className="text-xs text-gray-500 font-medium truncate max-w-[120px]">{user?.email}</p>
                   </div>
-                  <Avatar className="w-8 h-8 sm:w-10 sm:h-10 border-2 border-white shadow-sm cursor-pointer">
-                    <AvatarImage src="https://github.com/shadcn.png" />
-                    <AvatarFallback>AM</AvatarFallback>
+                  <Avatar className="w-10 h-10 border-2 border-white shadow-sm cursor-pointer bg-gray-100">
+                    <AvatarImage src={user?.picture} />
+                    <AvatarFallback className="font-bold text-gray-700">
+                      {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                    </AvatarFallback>
                   </Avatar>
                 </div>
               </div>
@@ -197,14 +202,13 @@ function NavItem({ icon, label, active = false, onClick }: any) {
   return (
     <div 
       onClick={onClick}
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-colors ${
-      active ? 'text-gray-900 bg-gray-100 font-medium' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+      className={`flex items-center gap-3 px-4 py-3.5 rounded-xl cursor-pointer transition-all duration-200 group ${
+      active ? 'bg-gray-900 text-white shadow-lg shadow-gray-900/20' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
     }`}>
-      <div className={`w-5 h-5 ${active ? 'text-gray-900' : 'text-gray-400'}`}>
+      <div className={`w-5 h-5 ${active ? 'text-white' : 'text-gray-400 group-hover:text-gray-900 transition-colors'}`}>
         {icon}
       </div>
-      <span className="text-sm">{label}</span>
-      {active && <div className="mr-auto w-1 h-6 bg-primary rounded-full" />}
+      <span className="text-sm font-bold">{label}</span>
     </div>
   );
 }

@@ -64,7 +64,7 @@ import {
   getStatusMessage
 } from '../../utils/serviceRequestStateMachine';
 import { activateBusinessFromRequest } from '../../api/adminServiceRequests';
-import { queryData } from '../../services/dataApi';
+import { apiFetch } from '../../services/apiClient';
 import { useAuth } from '../../contexts/AuthContext';
 
 export function AdminServiceRequests() {
@@ -76,40 +76,31 @@ export function AdminServiceRequests() {
   const [rejectionReason, setRejectionReason] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'submitted' | 'reviewed' | 'approved' | 'rejected'>('all');
   
-  // State for real data from Data API
+  // State for real data from API
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch service requests from Neon Data API
-  // Note: Admin needs to see all requests, but RLS will filter by user_id
-  // TODO: Add admin RLS policy to allow admins to see all requests
+  // Fetch service requests from BFF API
   useEffect(() => {
     const fetchRequests = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        // Build filter based on active tab
-        const filter: Record<string, any> = {};
-        if (activeTab !== 'all') {
-          filter.status = activeTab;
-        }
-        
-        // Query service_requests table via Data API
         const token = await getAccessToken();
-        const data = await queryData<ServiceRequest>('service_requests', {
-          select: 'id,status,business_model,business_name,description,rejection_reason,user_id,created_at,updated_at',
-          filter,
-          order: 'created_at.desc',
-        }, token);
+        let url = '/api/admin/service-requests';
+        if (activeTab !== 'all') {
+          url += `?status=${activeTab}`;
+        }
+
+        const data = await apiFetch<ServiceRequest[]>(url, token);
         
         setRequests(data || []);
       } catch (err: any) {
         console.error('Failed to fetch service requests:', err);
         
-        // Handle 401 - logout user
-        if (err.message.includes('Not authenticated') || err.message.includes('Session expired')) {
+        if (err.message === 'UNAUTHORIZED') {
           logout();
           return;
         }

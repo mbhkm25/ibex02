@@ -17,7 +17,9 @@
     "db:qr:verify": "psql \"$DATABASE_URL\" -f database/verify_qr_codes_rls.sql",
     "db:files": "node -e \"const {execSync} = require('child_process'); const dbUrl = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_W0h7BHyTerFY@ep-flat-hall-a7h51kjz-pooler.ap-southeast-2.aws.neon.tech/neondb?sslmode=require'; execSync(`psql -d \\\"${dbUrl}\\\" -f database/migration_files_storage.sql`, {stdio: 'inherit', shell: true, env: process.env});\"",
     "db:logo": "node -e \"const {execSync} = require('child_process'); const dbUrl = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_W0h7BHyTerFY@ep-flat-hall-a7h51kjz-pooler.ap-southeast-2.aws.neon.tech/neondb?sslmode=require'; execSync(`psql -d \\\"${dbUrl}\\\" -f database/migration_business_logo.sql`, {stdio: 'inherit', shell: true, env: process.env});\"",
-    "db:product-images": "node -e \"const {execSync} = require('child_process'); const dbUrl = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_W0h7BHyTerFY@ep-flat-hall-a7h51kjz-pooler.ap-southeast-2.aws.neon.tech/neondb?sslmode=require'; execSync(`psql -d \\\"${dbUrl}\\\" -f database/migration_product_images.sql`, {stdio: 'inherit', shell: true, env: process.env});\""
+    "db:product-images": "node -e \"const {execSync} = require('child_process'); const dbUrl = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_W0h7BHyTerFY@ep-flat-hall-a7h51kjz-pooler.ap-southeast-2.aws.neon.tech/neondb?sslmode=require'; execSync(`psql -d \\\"${dbUrl}\\\" -f database/migration_product_images.sql`, {stdio: 'inherit', shell: true, env: process.env});\"",
+    "db:auth0-users": "node -e \"const {execSync} = require('child_process'); const dbUrl = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_W0h7BHyTerFY@ep-flat-hall-a7h51kjz-pooler.ap-southeast-2.aws.neon.tech/neondb?sslmode=require'; execSync(`psql -d \\\"${dbUrl}\\\" -f database/migration_auth0_users.sql`, {stdio: 'inherit', shell: true, env: process.env});\"",
+    "db:customers": "node -e \"const {execSync} = require('child_process'); const dbUrl = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_W0h7BHyTerFY@ep-flat-hall-a7h51kjz-pooler.ap-southeast-2.aws.neon.tech/neondb?sslmode=require'; execSync(`psql -d \\\"${dbUrl}\\\" -f database/migration_customers_wallet.sql`, {stdio: 'inherit', shell: true, env: process.env});\""
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.11.0",
@@ -90,6 +92,7 @@
     "@types/node": "^20.19.27",
     "@types/pg": "^8.16.0",
     "@vitejs/plugin-react": "4.7.0",
+    "dotenv": "^17.2.3",
     "tailwindcss": "4.1.12",
     "vite": "6.3.5",
     "vite-plugin-pwa": "^1.2.0"

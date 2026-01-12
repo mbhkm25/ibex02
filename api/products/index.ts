@@ -119,6 +119,22 @@ async function handleRemoveImage(req: VercelRequest, user: any): Promise<any> {
   return { success: true, imageId };
 }
 
+// Handle list-images action
+async function handleListImages(req: VercelRequest, user: any): Promise<any> {
+  const productId = req.query?.product_id as string;
+  if (!productId) { throw new Error('VALIDATION_ERROR: product_id is required'); }
+  
+  // Ownership check
+  const product = await verifyProductOwnership(productId, user.id);
+  if (!product) { throw new Error('FORBIDDEN: Product not found or you do not own it'); }
+
+  const result = await query(
+      `SELECT id, product_id, file_id, sort_order, created_at FROM product_images WHERE product_id = $1 ORDER BY sort_order ASC`,
+      [productId]
+  );
+  return result.rows;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const user = await requireAuth(req);
@@ -145,6 +161,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(405).json({ error: 'METHOD_NOT_ALLOWED', message: 'DELETE or POST required for remove-image' });
         }
         result = await handleRemoveImage(req, user);
+        break;
+      case 'list-images':
+        if (req.method !== 'GET') {
+          return res.status(405).json({ error: 'METHOD_NOT_ALLOWED', message: 'GET required for list-images' });
+        }
+        result = await handleListImages(req, user);
         break;
       default:
         return res.status(400).json({

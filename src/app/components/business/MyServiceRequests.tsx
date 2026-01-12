@@ -45,39 +45,34 @@ import {
   getStatusMessage
 } from '../../utils/serviceRequestStateMachine';
 import { toast } from 'sonner';
-import { queryData } from '../../services/dataApi';
+import { apiFetch } from '../../services/apiClient';
 import { useAuth } from '../../contexts/AuthContext';
 
 export function MyServiceRequests() {
   const navigate = useNavigate();
   const { logout, getAccessToken } = useAuth();
   
-  // State for real data from Data API
+  // State for real data from API
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch user's service requests from Neon Data API
+  // Fetch user's service requests from BFF API
   useEffect(() => {
     const fetchRequests = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        // Query service_requests table via Data API
-        // RLS policy ensures user only sees their own requests
         const token = await getAccessToken();
-        const data = await queryData<ServiceRequest>('service_requests', {
-          select: 'id,status,business_model,business_name,description,rejection_reason,created_at,updated_at',
-          order: 'created_at.desc',
-        }, token);
+        // Call our Serverless Function instead of Neon directly
+        const data = await apiFetch<ServiceRequest[]>('/api/service-requests', token);
         
         setRequests(data || []);
       } catch (err: any) {
         console.error('Failed to fetch service requests:', err);
         
-        // Handle 401 - logout user
-        if (err.message.includes('Not authenticated') || err.message.includes('Session expired')) {
+        if (err.message === 'UNAUTHORIZED') {
           logout();
           return;
         }
