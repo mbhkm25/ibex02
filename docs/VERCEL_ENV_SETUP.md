@@ -16,22 +16,52 @@ This document explains how to configure environment variables in Vercel for prod
 
 These variables are bundled into the frontend code and exposed to the browser.
 
-#### `VITE_ADMIN_SECRET`
-- **Purpose**: Admin secret for MVP authentication
-- **Type**: String (minimum 32 characters)
-- **Security**: ⚠️ Exposed to browser - use with caution
-- **Generate**: `openssl rand -hex 32`
+#### `VITE_AUTH0_DOMAIN`
+- **Purpose**: Auth0 Domain for authentication
+- **Type**: String
+- **Security**: ⚠️ Exposed to browser (public information)
+- **Example**: `dev-0rlg3lescok8mwu0.us.auth0.com`
+- **Where to find**: Auth0 Dashboard → Applications → Your App → Domain
+
+#### `VITE_AUTH0_CLIENT_ID`
+- **Purpose**: Auth0 Application Client ID
+- **Type**: String
+- **Security**: ⚠️ Exposed to browser (public information)
+- **Example**: `1mW18IG95RJRXGpYfQWI4OJ1TTtQz7ez`
+- **Where to find**: Auth0 Dashboard → Applications → Your App → Client ID
+
+#### `VITE_AUTH0_AUDIENCE`
+- **Purpose**: Auth0 API Audience (Identifier)
+- **Type**: String (URL)
+- **Security**: ⚠️ Exposed to browser (public information)
+- **Example**: `https://api.ibex.app`
+- **Where to find**: Auth0 Dashboard → APIs → Your API → Identifier
 
 ### 2. Backend Variables (Serverless Functions)
 
 These variables are only available in serverless functions, never exposed to the browser.
 
-#### `ADMIN_SECRET`
-- **Purpose**: Admin secret for backend authentication
-- **Type**: String (minimum 32 characters)
+#### `AUTH0_DOMAIN`
+- **Purpose**: Auth0 Domain for JWT verification
+- **Type**: String
 - **Security**: ✅ Server-side only
-- **Important**: Must match `VITE_ADMIN_SECRET` for MVP
-- **Generate**: `openssl rand -hex 32`
+- **Example**: `dev-0rlg3lescok8mwu0.us.auth0.com`
+- **Note**: Should match `VITE_AUTH0_DOMAIN` (without `https://`)
+
+#### `AUTH0_ISSUER`
+- **Purpose**: Auth0 Issuer URL for JWT verification
+- **Type**: String (URL)
+- **Security**: ✅ Server-side only
+- **Example**: `https://dev-0rlg3lescok8mwu0.us.auth0.com/`
+- **Important**: Must end with `/` (trailing slash)
+- **Note**: Usually `https://{AUTH0_DOMAIN}/`
+
+#### `AUTH0_AUDIENCE`
+- **Purpose**: Auth0 API Audience for JWT verification
+- **Type**: String (URL)
+- **Security**: ✅ Server-side only
+- **Example**: `https://api.ibex.app`
+- **Note**: Should match `VITE_AUTH0_AUDIENCE`
 
 #### `DATABASE_URL`
 - **Purpose**: Neon PostgreSQL connection string
@@ -82,9 +112,18 @@ Add the following variables:
 
 #### For All Environments (Production, Preview, Development)
 
+**Frontend Variables (VITE_ prefix):**
 ```
-VITE_ADMIN_SECRET = <your-generated-secret>
-ADMIN_SECRET = <same-secret-as-above>
+VITE_AUTH0_DOMAIN = dev-0rlg3lescok8mwu0.us.auth0.com
+VITE_AUTH0_CLIENT_ID = <your-client-id>
+VITE_AUTH0_AUDIENCE = https://api.ibex.app
+```
+
+**Backend Variables:**
+```
+AUTH0_DOMAIN = dev-0rlg3lescok8mwu0.us.auth0.com
+AUTH0_ISSUER = https://dev-0rlg3lescok8mwu0.us.auth0.com/
+AUTH0_AUDIENCE = https://api.ibex.app
 DATABASE_URL = postgresql://neondb_owner:npg_W0h7BHyTerFY@ep-flat-hall-a7h51kjz-pooler.ap-southeast-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
 R2_ACCOUNT_ID = <your-r2-account-id>
 R2_ACCESS_KEY_ID = <your-r2-access-key-id>
@@ -93,9 +132,10 @@ R2_BUCKET_NAME = assets
 ```
 
 **Important Notes:**
-- `VITE_ADMIN_SECRET` and `ADMIN_SECRET` must be **the same value**
-- Use different secrets for Production, Preview, and Development
-- Never use production secrets in development
+- `AUTH0_ISSUER` must end with `/` (trailing slash)
+- `AUTH0_DOMAIN` should match `VITE_AUTH0_DOMAIN` (without `https://`)
+- `AUTH0_AUDIENCE` should match `VITE_AUTH0_AUDIENCE`
+- Use the same values for Production, Preview, and Development (Auth0 is shared)
 
 ### Step 3: Generate Strong Secrets
 
@@ -130,19 +170,23 @@ a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456
 
 ## Variable Matching Rules
 
-### Critical: VITE_ADMIN_SECRET = ADMIN_SECRET
+### Critical: Auth0 Domain and Audience Matching
 
-For MVP authentication to work, these must match:
+For Auth0 authentication to work, these must match:
 
 ```
-VITE_ADMIN_SECRET = "your-secret-here"
-ADMIN_SECRET = "your-secret-here"  ← Must be identical
+VITE_AUTH0_DOMAIN = "dev-0rlg3lescok8mwu0.us.auth0.com"
+AUTH0_DOMAIN = "dev-0rlg3lescok8mwu0.us.auth0.com"  ← Must match (without https://)
+AUTH0_ISSUER = "https://dev-0rlg3lescok8mwu0.us.auth0.com/"  ← Must end with /
+
+VITE_AUTH0_AUDIENCE = "https://api.ibex.app"
+AUTH0_AUDIENCE = "https://api.ibex.app"  ← Must match exactly
 ```
 
 **Why?**
-- Frontend sends `VITE_ADMIN_SECRET` in `x-admin-secret` header
-- Backend validates against `ADMIN_SECRET`
-- If they don't match, all admin requests will fail with 401 Unauthorized
+- Frontend uses `VITE_AUTH0_DOMAIN` and `VITE_AUTH0_AUDIENCE` to request tokens
+- Backend uses `AUTH0_ISSUER` and `AUTH0_AUDIENCE` to verify tokens
+- If they don't match, JWT verification will fail with 401 Unauthorized
 
 ---
 
@@ -171,44 +215,74 @@ ADMIN_SECRET = "your-secret-here"  ← Must be identical
 After setting up environment variables, verify:
 
 ### Local Development
-- [ ] `.env.local` exists locally (create from `docs/ENV_SETUP.md`)
+- [ ] `.env.local` exists locally (create from `docs/ENV_VARIABLES.md`)
 - [ ] `.env.local` is gitignored (check `.gitignore` - should already be there)
-- [ ] `VITE_ADMIN_SECRET` and `ADMIN_SECRET` match in `.env.local`
+- [ ] `VITE_AUTH0_DOMAIN`, `VITE_AUTH0_CLIENT_ID`, `VITE_AUTH0_AUDIENCE` are set in `.env.local`
 - [ ] `DATABASE_URL` is set in `.env.local`
-- [ ] Secrets are strong (minimum 32 characters, generated with `openssl rand -hex 32`)
+- [ ] Auth0 Application is configured in Auth0 Dashboard
 
 ### Vercel Production
 - [ ] All variables added to Vercel → Settings → Environment Variables
-- [ ] `VITE_ADMIN_SECRET` and `ADMIN_SECRET` match in Vercel
+- [ ] `VITE_AUTH0_DOMAIN` and `AUTH0_DOMAIN` match in Vercel
+- [ ] `VITE_AUTH0_AUDIENCE` and `AUTH0_AUDIENCE` match in Vercel
+- [ ] `AUTH0_ISSUER` ends with `/` (trailing slash)
 - [ ] `DATABASE_URL` is set in Vercel (backend only)
 - [ ] Variables set for correct environments (Production/Preview/Development)
 - [ ] Project redeployed after adding variables
-- [ ] Test admin activation endpoint works
+- [ ] Test login/logout works
+- [ ] Test JWT token verification works
 - [ ] Database connection works from serverless functions
 
 ---
 
 ## Testing After Setup
 
-### 1. Test Frontend Secret
+### 1. Test Frontend Auth0 Variables
 
-```bash
-# In browser console
-console.log(import.meta.env.VITE_ADMIN_SECRET)
-# Should show your secret (this is expected for MVP)
+```javascript
+// In browser console
+console.log('Domain:', import.meta.env.VITE_AUTH0_DOMAIN);
+console.log('Client ID:', import.meta.env.VITE_AUTH0_CLIENT_ID);
+console.log('Audience:', import.meta.env.VITE_AUTH0_AUDIENCE);
+// Should show your Auth0 configuration
 ```
 
-### 2. Test Backend Secret
+### 2. Test Auth0 Login
 
-```bash
-# Call activation endpoint
-curl -X POST https://your-app.vercel.app/api/admin/activate-service-request \
-  -H "Content-Type: application/json" \
-  -H "x-admin-secret: your-secret-here" \
-  -d '{"serviceRequestId": "test-id"}'
+1. Go to your Vercel deployment
+2. Click "تسجيل الدخول" (Login)
+3. You should be redirected to Auth0 login page
+4. After login, you should be redirected back to `/dashboard`
+
+### 3. Test JWT Token
+
+```javascript
+// In browser console (after login)
+const { getAccessTokenSilently } = useAuth0();
+const token = await getAccessTokenSilently();
+console.log('Token:', token);
+
+// Decode token payload (for verification only)
+const payload = JSON.parse(atob(token.split('.')[1]));
+console.log('Token Payload:', payload);
+// Should show: iss, aud, sub, etc.
 ```
 
-### 3. Test Database Connection
+### 4. Test Backend JWT Verification
+
+```javascript
+// In browser console (after login)
+const token = await getAccessTokenSilently();
+const response = await fetch('/api/storage?action=download-url&file_id=test', {
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+});
+console.log('Response Status:', response.status);
+// Should be 200 or 401 (not 500 or 403)
+```
+
+### 5. Test Database Connection
 
 Check serverless function logs in Vercel dashboard for database connection errors.
 
@@ -216,14 +290,36 @@ Check serverless function logs in Vercel dashboard for database connection error
 
 ## Troubleshooting
 
-### Problem: 401 Unauthorized
+### Problem: 401 Unauthorized from Backend
 
-**Cause**: `VITE_ADMIN_SECRET` and `ADMIN_SECRET` don't match
+**Cause**: JWT token verification failed (issuer/audience mismatch)
 
 **Solution**: 
-1. Verify both variables in Vercel
-2. Ensure they are identical
-3. Redeploy the project
+1. Verify `AUTH0_ISSUER` ends with `/` (trailing slash)
+2. Verify `AUTH0_AUDIENCE` matches `VITE_AUTH0_AUDIENCE`
+3. Verify `AUTH0_DOMAIN` matches `VITE_AUTH0_DOMAIN` (without `https://`)
+4. Check serverless function logs in Vercel for JWT errors
+5. Redeploy the project
+
+### Problem: "Invalid state" Error
+
+**Cause**: OAuth state parameter mismatch (usually cache/cookie issue)
+
+**Solution**:
+1. Clear browser cookies and local storage
+2. Ensure `cacheLocation="localstorage"` in `Auth0Provider`
+3. Verify Allowed Web Origins in Auth0 Dashboard
+4. Try incognito/private browsing mode
+
+### Problem: "Service not found: https://api.ibex.app"
+
+**Cause**: Auth0 API not created or audience mismatch
+
+**Solution**:
+1. Go to Auth0 Dashboard → APIs
+2. Verify API exists with Identifier = `https://api.ibex.app`
+3. Verify `VITE_AUTH0_AUDIENCE` and `AUTH0_AUDIENCE` match the API Identifier
+4. Ensure API is enabled
 
 ### Problem: Database Connection Failed
 
@@ -234,7 +330,7 @@ Check serverless function logs in Vercel dashboard for database connection error
 2. Check connection string format
 3. Ensure SSL is enabled (`sslmode=require`)
 
-### Problem: Frontend Can't Read VITE_ADMIN_SECRET
+### Problem: Frontend Can't Read VITE_ Variables
 
 **Cause**: Variable not prefixed with `VITE_` or not redeployed
 
@@ -249,8 +345,12 @@ Check serverless function logs in Vercel dashboard for database connection error
 
 | Variable | Scope | Required | Security |
 |----------|-------|----------|----------|
-| `VITE_ADMIN_SECRET` | Frontend | Yes | ⚠️ Exposed to browser |
-| `ADMIN_SECRET` | Backend | Yes | ✅ Server-side only |
+| `VITE_AUTH0_DOMAIN` | Frontend | Yes | ⚠️ Exposed to browser (public) |
+| `VITE_AUTH0_CLIENT_ID` | Frontend | Yes | ⚠️ Exposed to browser (public) |
+| `VITE_AUTH0_AUDIENCE` | Frontend | Yes | ⚠️ Exposed to browser (public) |
+| `AUTH0_DOMAIN` | Backend | Yes | ✅ Server-side only |
+| `AUTH0_ISSUER` | Backend | Yes | ✅ Server-side only |
+| `AUTH0_AUDIENCE` | Backend | Yes | ✅ Server-side only |
 | `DATABASE_URL` | Backend | Yes | ✅ Server-side only |
 | `R2_ACCOUNT_ID` | Backend | Yes | ✅ Server-side only |
 | `R2_ACCESS_KEY_ID` | Backend | Yes | ✅ Server-side only |
@@ -263,15 +363,17 @@ Check serverless function logs in Vercel dashboard for database connection error
 
 When moving from local development to Vercel:
 
-1. **Copy secrets from `.env.local`** to Vercel
-2. **Generate new secrets** for production (don't reuse dev secrets)
-3. **Set environment-specific values** in Vercel
-4. **Redeploy** the project
-5. **Test** all endpoints
+1. **Copy Auth0 variables from `.env.local`** to Vercel
+2. **Use the same Auth0 values** for all environments (Auth0 is shared)
+3. **Set all environment variables** in Vercel (Production, Preview, Development)
+4. **Update Auth0 Dashboard** with Vercel domain (Allowed Callback/Logout URLs)
+5. **Redeploy** the project
+6. **Test** login/logout and API endpoints
 
 ---
 
-**Document Version**: 1.0  
+**Document Version**: 2.0  
 **Last Updated**: 2024-01-20  
-**Author**: DevOps-aware SaaS Engineer
+**Author**: DevOps-aware SaaS Engineer  
+**Related**: See `docs/VERCEL_AUTH0_SETUP.md` for detailed Auth0 configuration guide
 
