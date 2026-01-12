@@ -1,17 +1,18 @@
 /**
  * JWT Authentication Middleware
  * 
- * Architecture: Neon Auth JWT verification using JWKS
+ * Architecture: Auth0 JWT verification using JWKS
  * 
  * Core Principle:
- * - Neon Auth = Identity Authority
+ * - Auth0 = Identity Authority
  * - JWT = Proof of Identity
  * - API = Gatekeeper
  * - Database = Truth
  * 
  * Security:
  * - Verify JWT signature using JWKS
- * - Validate issuer (must match Neon Auth)
+ * - Validate issuer (must match Auth0)
+ * - Validate audience (must match API identifier)
  * - Validate expiration
  * - Extract user_id from 'sub' claim
  * - Never trust client-side claims
@@ -20,14 +21,13 @@
 import jwt from 'jsonwebtoken';
 import jwksClient, { SigningKey } from 'jwks-rsa';
 
-const NEON_AUTH_ISSUER = process.env.NEON_AUTH_ISSUER || 'https://ep-flat-hall-a7h51kjz.neonauth.ap-southeast-2.aws.neon.tech/neondb/auth';
-const JWKS_URI = process.env.NEON_AUTH_JWKS_URL || `${NEON_AUTH_ISSUER}/.well-known/jwks.json`;
+const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN || 'dev-0rlg3lescok8mwu0.us.auth0.com';
+const AUTH0_ISSUER = process.env.AUTH0_ISSUER || `https://${AUTH0_DOMAIN}/`;
+const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE || 'https://api.ibex.app';
+const JWKS_URI = `https://${AUTH0_DOMAIN}/.well-known/jwks.json`;
 
 /**
  * JWKS Client for fetching public keys
- * 
- * Architecture Decision: Cache JWKS keys for performance.
- * Keys are cached for 10 hours (default) and rotated automatically.
  */
 const client = jwksClient({
   jwksUri: JWKS_URI,
@@ -67,7 +67,7 @@ export interface AuthUser {
  * 
  * @param token - JWT access token from Authorization header
  * @returns Decoded user information
- * @throws Error if token is invalid, expired, or issuer mismatch
+ * @throws Error if token is invalid, expired, or issuer/audience mismatch
  */
 export async function verifyToken(token: string): Promise<AuthUser> {
   return new Promise((resolve, reject) => {
@@ -75,7 +75,8 @@ export async function verifyToken(token: string): Promise<AuthUser> {
       token,
       getKey,
       {
-        issuer: NEON_AUTH_ISSUER,
+        issuer: AUTH0_ISSUER,
+        audience: AUTH0_AUDIENCE,
         algorithms: ['RS256'],
       },
       (err, decoded: any) => {
@@ -89,19 +90,21 @@ export async function verifyToken(token: string): Promise<AuthUser> {
           return;
         }
 
-        // Extract user ID from 'sub' claim (standard OIDC)
-        const userId = decoded.sub || decoded.user_id;
+        // Extract user ID from 'sub' claim
+        const userId = decoded.sub;
         if (!userId) {
           reject(new Error('JWT missing user ID in sub claim'));
           return;
         }
 
-        // Extract roles (may be array or single value)
-        const roles = decoded.roles || (decoded.role ? [decoded.role] : []);
+        // Extract roles
+        // Look for roles in namespaced claim first, then standard scope/claim
+        const namespace = 'https://api.ibex.app/roles';
+        const roles = decoded[namespace] || decoded['roles'] || [];
 
         const user: AuthUser = {
           id: userId,
-          email: decoded.email,
+          email: decoded.email, // Note: Needs custom Action in Auth0 to add email to Access Token
           phone: decoded.phone,
           roles: Array.isArray(roles) ? roles : [roles],
           claims: decoded,
@@ -115,9 +118,6 @@ export async function verifyToken(token: string): Promise<AuthUser> {
 
 /**
  * Extract JWT token from Authorization header
- * 
- * @param authHeader - Authorization header value (e.g., "Bearer <token>")
- * @returns JWT token or null
  */
 export function extractToken(authHeader: string | string[] | undefined): string | null {
   if (!authHeader) return null;
@@ -135,16 +135,6 @@ export function extractToken(authHeader: string | string[] | undefined): string 
 
 /**
  * Require authentication middleware
- * 
- * Validates JWT and attaches req.user
- * 
- * Usage:
- * ```typescript
- * export default async function handler(req: VercelRequest, res: VercelResponse) {
- *   const user = await requireAuth(req);
- *   // user.id, user.email, user.roles available
- * }
- * ```
  */
 export async function requireAuth(req: any): Promise<AuthUser> {
   const authHeader = req.headers?.authorization || req.headers?.Authorization;
@@ -164,16 +154,6 @@ export async function requireAuth(req: any): Promise<AuthUser> {
 
 /**
  * Require admin role middleware
- * 
- * Validates JWT and checks for admin role
- * 
- * Usage:
- * ```typescript
- * export default async function handler(req: VercelRequest, res: VercelResponse) {
- *   const user = await requireAdmin(req);
- *   // user is guaranteed to have admin role
- * }
- * ```
  */
 export async function requireAdmin(req: any): Promise<AuthUser> {
   const user = await requireAuth(req);
@@ -184,4 +164,3 @@ export async function requireAdmin(req: any): Promise<AuthUser> {
 
   return user;
 }
-

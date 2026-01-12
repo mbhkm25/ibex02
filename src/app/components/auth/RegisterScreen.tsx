@@ -1,156 +1,47 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ArrowRight } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Card } from '../ui/card';
 import { useAuth } from '../../contexts/AuthContext';
-import { toast } from 'sonner';
+import { Button } from '../ui/button';
+import { Loader2, UserPlus } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
 
 export function RegisterScreen() {
-  const navigate = useNavigate();
-  const { register, isLoading } = useAuth();
-  const [formData, setFormData] = useState({
-    fullName: '',
-    phone: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    address: ''
-  });
+  const { register, isLoading, isAuthenticated } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate passwords match
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('كلمات المرور غير متطابقة');
-      return;
-    }
-
-    // Validate password length
-    if (formData.password.length < 8) {
-      toast.error('كلمة المرور يجب أن تكون 8 أحرف على الأقل');
-      return;
-    }
-
-    try {
-      await register(formData.email, formData.password, formData.phone, formData.fullName);
-      // Navigation will happen in AuthContext
-    } catch (error: any) {
-      // Error is already handled in AuthContext
-      console.error('Registration failed:', error);
-    }
-  };
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] p-6 flex flex-col justify-center">
-      <div className="max-w-md mx-auto w-full">
-          <Button
-            variant="ghost"
-            className="mb-6 rounded-full text-gray-500 hover:text-gray-900 gap-2 px-2"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowRight className="w-5 h-5" />
-            <span>رجوع</span>
-          </Button>
-
-        <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-900">إنشاء حساب جديد</h1>
-            <p className="text-gray-500 mt-2">املأ البيانات التالية لإنشاء محفظتك</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-lg text-center">
+        <div className="mb-6">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <UserPlus className="w-8 h-8 text-green-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">إنشاء حساب جديد</h1>
+          <p className="text-gray-500 mt-2">انضم إلينا وابدأ رحلتك</p>
         </div>
 
-        <Card className="p-8 border-0 shadow-sm rounded-3xl bg-white">
-            <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <Label htmlFor="fullName">الاسم الكامل</Label>
-              <Input
-                id="fullName"
-                type="text"
-                value={formData.fullName}
-                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                className="mt-2 h-12 rounded-xl bg-gray-50 border-gray-100 focus:bg-white transition-colors"
-                placeholder="أدخل اسمك الكامل"
-                required
-              />
-            </div>
+        <Button 
+            onClick={() => register()} 
+            disabled={isLoading}
+            className="w-full h-12 text-lg font-medium bg-green-600 hover:bg-green-700 text-white rounded-xl flex items-center justify-center gap-2"
+        >
+            {isLoading ? (
+                <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    جاري التحميل...
+                </>
+            ) : (
+                'إنشاء حساب عبر Auth0'
+            )}
+        </Button>
 
-            <div>
-              <Label htmlFor="phone">رقم الجوال</Label>
-              <Input
-                id="phone"
-                type="tel"
-                dir="ltr"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="mt-2 h-12 rounded-xl bg-gray-50 border-gray-100 focus:bg-white transition-colors text-right"
-                placeholder="+966 5XXXXXXXX"
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="email">البريد الإلكتروني</Label>
-              <Input
-                id="email"
-                type="email"
-                dir="ltr"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="mt-2 h-12 rounded-xl bg-gray-50 border-gray-100 focus:bg-white transition-colors text-right"
-                placeholder="example@email.com"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="password">كلمة المرور</Label>
-              <Input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="mt-2 h-12 rounded-xl bg-gray-50 border-gray-100 focus:bg-white transition-colors"
-                placeholder="••••••••"
-                required
-              />
-            </div>
-            <div>
-                    <Label htmlFor="confirmPassword">تأكيدها</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    className="mt-2 h-12 rounded-xl bg-gray-50 border-gray-100 focus:bg-white transition-colors"
-                placeholder="••••••••"
-                required
-              />
-            </div>
-          </div>
-
-            <Button 
-              type="submit" 
-              disabled={isLoading}
-              className="w-full h-12 rounded-xl mt-4 text-base bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-            {isLoading ? 'جاري إنشاء الحساب...' : 'إنشاء الحساب'}
-          </Button>
-            </form>
-        </Card>
-
-        <p className="text-center mt-6 text-gray-500">
+        <div className="mt-6 text-sm text-gray-500">
             لديك حساب بالفعل؟{' '}
-            <button
-              type="button"
-              onClick={() => navigate('/login')}
-                className="text-blue-600 font-semibold hover:underline"
-            >
-              تسجيل الدخول
+            <button onClick={() => register()} className="text-blue-600 font-semibold hover:underline">
+                تسجيل الدخول
             </button>
-          </p>
+        </div>
       </div>
     </div>
   );

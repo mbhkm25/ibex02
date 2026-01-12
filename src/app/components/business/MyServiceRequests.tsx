@@ -50,7 +50,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 export function MyServiceRequests() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, getAccessToken } = useAuth();
   
   // State for real data from Data API
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
@@ -66,10 +66,11 @@ export function MyServiceRequests() {
         
         // Query service_requests table via Data API
         // RLS policy ensures user only sees their own requests
+        const token = await getAccessToken();
         const data = await queryData<ServiceRequest>('service_requests', {
           select: 'id,status,business_model,business_name,description,rejection_reason,created_at,updated_at',
           order: 'created_at.desc',
-        });
+        }, token);
         
         setRequests(data || []);
       } catch (err: any) {
@@ -89,7 +90,7 @@ export function MyServiceRequests() {
     };
 
     fetchRequests();
-  }, [logout]);
+  }, [logout, getAccessToken]);
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 

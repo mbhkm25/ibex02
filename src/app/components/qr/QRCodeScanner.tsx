@@ -43,7 +43,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { toast } from 'sonner';
 import { Html5Qrcode } from 'html5-qrcode';
 import { useAuth } from '../../contexts/AuthContext';
-import { getAccessToken } from '../../services/auth';
 
 interface QRCodeMetadata {
   id: string;
@@ -72,7 +71,7 @@ const ENTITY_TYPE_LABELS = {
 
 export function QRCodeScanner() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, getAccessToken } = useAuth();
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [scanning, setScanning] = useState(false);
   const [qrMetadata, setQrMetadata] = useState<QRCodeMetadata | null>(null);
@@ -106,7 +105,7 @@ export function QRCodeScanner() {
   // Resolve QR code metadata from Data API
   async function resolveQRCode(qrId: string): Promise<QRCodeMetadata | null> {
     try {
-      const token = getAccessToken();
+      const token = await getAccessToken();
       if (!token) {
         logout();
         throw new Error('Not authenticated');

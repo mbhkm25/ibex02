@@ -16,7 +16,7 @@ import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { toast } from 'sonner';
 import { uploadFile } from '../../services/storage';
-import { getAuthHeader } from '../../services/auth';
+import { useAuth } from '../../contexts/AuthContext';
 import { queryData } from '../../services/dataApi';
 
 interface ProductImage {
@@ -40,6 +40,7 @@ interface ProductImagesProps {
 }
 
 export function ProductImages({ productId, businessId }: ProductImagesProps) {
+  const { getAccessToken } = useAuth();
   const [images, setImages] = useState<ProductImage[]>([]);
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -56,13 +57,15 @@ export function ProductImages({ productId, businessId }: ProductImagesProps) {
         setError(null);
 
         // Fetch product_images via Data API
+        const token = await getAccessToken();
         const productImages = await queryData<ProductImage>(
           'product_images',
           {
             select: 'id,product_id,file_id,sort_order,created_at',
             filter: `product_id.eq.${productId}`,
             order: 'sort_order.asc',
-          }
+          },
+          token
         );
 
         setImages(productImages);
@@ -71,10 +74,10 @@ export function ProductImages({ productId, businessId }: ProductImagesProps) {
         const urls: Record<string, string> = {};
         for (const img of productImages) {
           try {
-            const authHeaders = getAuthHeader();
+            const token = await getAccessToken();
             const response = await fetch(`/api/storage?action=download-url&file_id=${img.file_id}`, {
               method: 'GET',
-              headers: authHeaders,
+              headers: { Authorization: `Bearer ${token}` },
             });
 
             if (response.ok) {
@@ -120,20 +123,21 @@ export function ProductImages({ productId, businessId }: ProductImagesProps) {
         }
 
         // STEP 1: Upload file
+        const token = await getAccessToken();
         const uploadResult = await uploadFile({
           file,
           businessId,
           originalFilename: file.name,
           metadata: { type: 'product-image', product_id: productId },
+          token,
         });
 
         // STEP 2: Add to product_images
-        const authHeaders = getAuthHeader();
         const addResponse = await fetch('/api/products', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...authHeaders,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             action: 'add-image',
@@ -157,10 +161,10 @@ export function ProductImages({ productId, businessId }: ProductImagesProps) {
       const urls: Record<string, string> = {};
       for (const img of newImages) {
         try {
-          const authHeaders = getAuthHeader();
+          const token = await getAccessToken();
           const response = await fetch(`/api/storage?action=download-url&file_id=${img.file_id}`, {
             method: 'GET',
-            headers: authHeaders,
+            headers: { Authorization: `Bearer ${token}` },
           });
 
           if (response.ok) {
@@ -193,12 +197,12 @@ export function ProductImages({ productId, businessId }: ProductImagesProps) {
     if (!confirm('هل أنت متأكد من حذف هذه الصورة؟')) return;
 
     try {
-      const authHeaders = getAuthHeader();
+      const token = await getAccessToken();
       const response = await fetch('/api/products', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          ...authHeaders,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           action: 'remove-image',

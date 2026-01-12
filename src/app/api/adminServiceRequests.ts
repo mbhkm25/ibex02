@@ -15,7 +15,6 @@ import {
   ActivateBusinessPayload 
 } from '../types/serviceRequest';
 import { activateBusiness, canActivateBusiness } from '../services/businessActivationService';
-import { getAuthHeader, isAdmin } from '../services/auth';
 
 /**
  * Base API URL (would be from environment in production)
@@ -76,20 +75,14 @@ export async function rejectServiceRequest(
  */
 export async function activateBusinessFromRequest(
   requestId: string,
+  token: string,
   payload?: ActivateBusinessPayload
 ): Promise<{
   businessProfile: any; // BusinessProfile type
   templateInstance: any; // TemplateInstance type
   activationDate: string;
 }> {
-  // Check if user is authenticated and has admin role
-  if (!isAdmin()) {
-    throw new Error('Admin role required to activate businesses');
-  }
-  
-  // Get JWT token from auth service
-  const authHeaders = getAuthHeader();
-  if (!authHeaders.Authorization) {
+  if (!token) {
     throw new Error('Not authenticated. Please log in.');
   }
   
@@ -98,7 +91,7 @@ export async function activateBusinessFromRequest(
     method: 'POST',
     headers: { 
       'Content-Type': 'application/json',
-      ...authHeaders, // Send JWT token in Authorization header
+      'Authorization': `Bearer ${token}`,
     },
     body: JSON.stringify({ 
       serviceRequestId: requestId,
@@ -134,7 +127,9 @@ export async function getServiceRequest(requestId: string): Promise<ServiceReque
  * 
  * Architecture: Calls serverless function to fetch from database
  */
-export async function listServiceRequests(params?: {
+export async function listServiceRequests(
+  token: string,
+  params?: {
   status?: string;
   page?: number;
   pageSize?: number;
@@ -144,10 +139,8 @@ export async function listServiceRequests(params?: {
   page: number;
   pageSize: number;
 }> {
-  const adminSecret = getAdminSecret();
-  
-  if (!adminSecret) {
-    throw new Error('Admin secret is not configured.');
+  if (!token) {
+    throw new Error('Not authenticated.');
   }
 
   // Build query string
@@ -160,7 +153,7 @@ export async function listServiceRequests(params?: {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      'x-admin-secret': adminSecret,
+      'Authorization': `Bearer ${token}`,
     },
   });
 

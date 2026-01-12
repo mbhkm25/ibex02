@@ -6,8 +6,9 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 // Auth Pages
 import { WelcomeScreen } from './components/auth/WelcomeScreen';
-import { RegisterScreen } from './components/auth/RegisterScreen';
 import { LoginScreen } from './components/auth/LoginScreen';
+import { RegisterScreen } from './components/auth/RegisterScreen';
+import { CallbackPage } from './components/auth/CallbackPage';
 import { OTPScreen } from './components/auth/OTPScreen';
 
 // Main App Pages
@@ -63,6 +64,7 @@ export default function App() {
           <Route path="/welcome" element={<WelcomeScreen />} />
           <Route path="/register" element={<RegisterScreen />} />
           <Route path="/login" element={<LoginScreen />} />
+          <Route path="/callback" element={<CallbackPage />} />
           <Route path="/otp" element={<OTPScreen />} />
           
           {/* Main App Routes */}

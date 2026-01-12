@@ -68,7 +68,7 @@ import { queryData } from '../../services/dataApi';
 import { useAuth } from '../../contexts/AuthContext';
 
 export function AdminServiceRequests() {
-  const { logout } = useAuth();
+  const { logout, getAccessToken } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
   const [showRequestDetails, setShowRequestDetails] = useState(false);
@@ -97,11 +97,12 @@ export function AdminServiceRequests() {
         }
         
         // Query service_requests table via Data API
+        const token = await getAccessToken();
         const data = await queryData<ServiceRequest>('service_requests', {
           select: 'id,status,business_model,business_name,description,rejection_reason,user_id,created_at,updated_at',
           filter,
           order: 'created_at.desc',
-        });
+        }, token);
         
         setRequests(data || []);
       } catch (err: any) {
@@ -121,7 +122,7 @@ export function AdminServiceRequests() {
     };
 
     fetchRequests();
-  }, [activeTab, logout]);
+  }, [activeTab, logout, getAccessToken]);
 
   // Filter requests by search query (client-side filtering for now)
   const filteredRequests = requests.filter(request => {
@@ -214,7 +215,8 @@ export function AdminServiceRequests() {
     }
 
     try {
-      const result = await activateBusinessFromRequest(request.id);
+      const token = await getAccessToken();
+      const result = await activateBusinessFromRequest(request.id, token);
       toast.success(`تم تفعيل العمل "${result.businessProfile.name}" بنجاح!`);
       setShowRequestDetails(false);
       // Refresh requests list

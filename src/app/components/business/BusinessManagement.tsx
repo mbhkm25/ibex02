@@ -49,7 +49,7 @@ import { CustomerRatingDialog } from './CustomerRatingDialog';
 import { CustomerSuspendDialog } from './CustomerSuspendDialog';
 import { DashboardLayout } from '../layout/DashboardLayout';
 import { uploadFile } from '../../services/storage';
-import { getAuthHeader } from '../../services/auth';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Customer {
   id: string;
@@ -89,6 +89,7 @@ interface DepositRequest {
 export function BusinessManagement() {
   const navigate = useNavigate();
   const { businessId } = useParams();
+  const { getAccessToken } = useAuth();
   const [activeSection, setActiveSection] = useState<'overview' | 'customers' | 'orders' | 'cashier' | 'currency' | 'bank' | 'subscription' | 'deposits'>('overview');
   const [selectedDepositRequest, setSelectedDepositRequest] = useState<DepositRequest | null>(null);
   const [showDepositDetails, setShowDepositDetails] = useState(false);
@@ -147,10 +148,10 @@ export function BusinessManagement() {
       try {
         // TODO: Fetch logo metadata via Data API
         // For now, we'll use a serverless endpoint to get signed URL
-        const authHeaders = getAuthHeader();
+        const token = await getAccessToken();
         const response = await fetch(`/api/storage?action=download-url&file_id=${business.logo_file_id}`, {
           method: 'GET',
-          headers: authHeaders,
+          headers: { Authorization: `Bearer ${token}` },
         });
         
         if (response.ok) {
@@ -187,21 +188,23 @@ export function BusinessManagement() {
     setLogoError(null);
     
     try {
+      const token = await getAccessToken();
+
       // STEP 1: Upload file
       const uploadResult = await uploadFile({
         file,
         businessId,
         originalFilename: file.name,
         metadata: { type: 'logo' },
+        token,
       });
       
       // STEP 2: Update business logo
-      const authHeaders = getAuthHeader();
       const updateResponse = await fetch('/api/business/update-logo', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...authHeaders,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           business_id: businessId,
@@ -225,7 +228,7 @@ export function BusinessManagement() {
       // STEP 4: Fetch new logo URL
       const downloadResponse = await fetch(`/api/storage?action=download-url&file_id=${uploadResult.id}`, {
         method: 'GET',
-        headers: authHeaders,
+        headers: { Authorization: `Bearer ${token}` },
       });
       
       if (downloadResponse.ok) {

@@ -9,17 +9,15 @@
 ## المتغيرات المطلوبة
 
 ### Frontend (Vite)
-- `VITE_ADMIN_SECRET` - Secret للمصادقة في Frontend (deprecated)
-- `VITE_NEON_AUTH_ISSUER` - Neon Auth Issuer URL
-- `VITE_NEON_AUTH_BASE` - Neon Auth Base URL
-- `VITE_NEON_AUTH_JWKS_URL` - Neon Auth JWKS URL
+- `VITE_AUTH0_DOMAIN` - Auth0 Domain (e.g., dev-0rlg3lescok8mwu0.us.auth0.com)
+- `VITE_AUTH0_CLIENT_ID` - Auth0 Client ID
+- `VITE_AUTH0_AUDIENCE` - Auth0 API Audience (https://api.ibex.app)
 
 ### Backend (Serverless Functions)
-- `ADMIN_SECRET` - Secret للمصادقة في Backend (deprecated)
+- `AUTH0_DOMAIN` - Auth0 Domain
+- `AUTH0_ISSUER` - Auth0 Issuer URL (e.g., https://dev-0rlg3lescok8mwu0.us.auth0.com/)
+- `AUTH0_AUDIENCE` - Auth0 API Audience (https://api.ibex.app)
 - `DATABASE_URL` - PostgreSQL connection string من Neon
-- `NEON_AUTH_ISSUER` - Neon Auth Issuer URL
-- `NEON_AUTH_BASE` - Neon Auth Base URL
-- `NEON_AUTH_JWKS_URL` - Neon Auth JWKS URL
 
 ### Cloudflare R2 Storage
 - `R2_ACCOUNT_ID` - Cloudflare R2 Account ID
@@ -50,14 +48,6 @@ npm run dev
 2. أضف جميع المتغيرات (بدون `VITE_` prefix للـ backend)
 3. أضف `VITE_*` variables للـ frontend
 
-## Neon Auth URLs
-
-```
-NEON_AUTH_ISSUER=https://ep-flat-hall-a7h51kjz.neonauth.ap-southeast-2.aws.neon.tech/neondb/auth
-NEON_AUTH_BASE=https://ep-flat-hall-a7h51kjz.neonauth.ap-southeast-2.aws.neon.tech/neondb/auth
-NEON_AUTH_JWKS_URL=https://ep-flat-hall-a7h51kjz.neonauth.ap-southeast-2.aws.neon.tech/neondb/auth/.well-known/jwks.json
-```
-
 ## Database URL
 
 ```
@@ -69,4 +59,3 @@ DATABASE_URL=postgresql://neondb_owner:npg_W0h7BHyTerFY@ep-flat-hall-a7h51kjz-po
 - ⚠️ **لا ترفع `.env.local` إلى Git**
 - ⚠️ **لا تشارك Secrets مع أي شخص**
 - ⚠️ **استخدم secrets مختلفة لكل environment (dev, staging, production)**
-

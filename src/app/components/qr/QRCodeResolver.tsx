@@ -22,7 +22,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, XCircle, AlertCircle } from 'lucide-react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
-import { getAccessToken } from '../../services/auth';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface QRCodeMetadata {
@@ -37,7 +36,7 @@ interface QRCodeMetadata {
 export function QRCodeResolver() {
   const { qrId } = useParams<{ qrId: string }>();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, getAccessToken } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,7 +49,7 @@ export function QRCodeResolver() {
       }
 
       try {
-        const token = getAccessToken();
+        const token = await getAccessToken();
         if (!token) {
           // Redirect to login if not authenticated
           navigate('/login');

@@ -43,7 +43,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { toast } from 'sonner';
-import { getAuthHeader } from '../../services/auth';
+import { useAuth } from '../../contexts/AuthContext';
 import { QRCodeSVG } from 'qrcode.react';
 
 interface QRCodeResult {
@@ -66,6 +66,7 @@ const ENTITY_TYPES = [
 export function QRGenerator() {
   const navigate = useNavigate();
   const { businessId } = useParams<{ businessId: string }>();
+  const { getAccessToken } = useAuth();
   
   const [formData, setFormData] = useState({
     entity_type: '',
@@ -109,9 +110,9 @@ export function QRGenerator() {
 
     try {
       setLoading(true);
-      const authHeaders = getAuthHeader();
+      const token = await getAccessToken();
       
-      if (!authHeaders.Authorization) {
+      if (!token) {
         throw new Error('Not authenticated. Please log in.');
       }
 
@@ -119,7 +120,7 @@ export function QRGenerator() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...authHeaders,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           entity_type: formData.entity_type,

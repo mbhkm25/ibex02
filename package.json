@@ -20,6 +20,7 @@
     "db:product-images": "node -e \"const {execSync} = require('child_process'); const dbUrl = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_W0h7BHyTerFY@ep-flat-hall-a7h51kjz-pooler.ap-southeast-2.aws.neon.tech/neondb?sslmode=require'; execSync(`psql -d \\\"${dbUrl}\\\" -f database/migration_product_images.sql`, {stdio: 'inherit', shell: true, env: process.env});\""
   },
   "dependencies": {
+    "@auth0/auth0-react": "^2.11.0",
     "@aws-sdk/client-s3": "^3.966.0",
     "@aws-sdk/s3-request-presigner": "^3.966.0",
     "@emotion/react": "11.14.0",

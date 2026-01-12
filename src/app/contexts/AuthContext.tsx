@@ -1,172 +1,118 @@
-/**
- * Auth Context Provider
- * 
- * Architecture: React Context for authentication state management
- * 
- * Responsibilities:
- * - Store authenticated user
- * - Provide login/logout functions
- * - Expose isAuthenticated, isAdmin
- * - Handle token refresh
- * - Auto-logout on token expiration
- */
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useAuth0 } from '@auth0/auth0-react';
+import { Loader2 } from 'lucide-react';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  login as authLogin, 
-  register as authRegister, 
-  logout as authLogout,
-  getCurrentUser,
-  isAuthenticated as checkIsAuthenticated,
-  isAdmin as checkIsAdmin,
-  refreshAccessToken,
-  AuthUser,
-  AuthTokens
-} from '../services/auth';
-import { toast } from 'sonner';
+export interface AuthUser {
+  id: string;
+  email?: string;
+  name?: string;
+  picture?: string;
+  roles?: string[];
+  email_verified?: boolean;
+  sub?: string;
+  [key: string]: any;
+}
 
 interface AuthContextType {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, phone?: string, fullName?: string) => Promise<void>;
+  login: () => Promise<void>;
+  register: () => Promise<void>;
   logout: () => void;
-  refreshToken: () => Promise<void>;
+  getAccessToken: () => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const {
+    user: auth0User,
+    isAuthenticated,
+    isLoading,
+    loginWithRedirect,
+    logout: auth0Logout,
+    getAccessTokenSilently,
+  } = useAuth0();
+
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
 
-  // Initialize auth state on mount
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        if (checkIsAuthenticated()) {
-          const currentUser = getCurrentUser();
-          setUser(currentUser);
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-        authLogout();
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initAuth();
-  }, []);
-
-  // Check token expiration periodically
-  useEffect(() => {
-    if (!checkIsAuthenticated()) {
-      setUser(null);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      if (!checkIsAuthenticated()) {
+    if (isAuthenticated && auth0User) {
+        // Map Auth0 user to our AuthUser structure
+        // Assuming roles are added to the token or user profile via namespace
+        const namespace = 'https://api.ibex.app/roles'; // Or generic 'roles' if added directly
+        const roles = (auth0User[namespace] as string[]) || (auth0User['roles'] as string[]) || [];
+        
+        setUser({
+            id: auth0User.sub || '',
+            email: auth0User.email,
+            name: auth0User.name,
+            picture: auth0User.picture,
+            roles: roles,
+            email_verified: auth0User.email_verified,
+            sub: auth0User.sub,
+            ...auth0User
+        });
+    } else {
         setUser(null);
-        authLogout();
-        toast.info('انتهت جلسة تسجيل الدخول. يرجى تسجيل الدخول مرة أخرى.');
-        navigate('/login');
-      }
-    }, 60000); // Check every minute
-
-    return () => clearInterval(interval);
-  }, [navigate]);
-
-  const login = useCallback(async (email: string, password: string) => {
-    try {
-      setIsLoading(true);
-      await authLogin(email, password);
-      const currentUser = getCurrentUser();
-      setUser(currentUser);
-      toast.success('تم تسجيل الدخول بنجاح');
-      
-      // Redirect based on role
-      if (checkIsAdmin()) {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/dashboard');
-      }
-    } catch (error: any) {
-      console.error('Login error:', error);
-      toast.error(error.message || 'فشل تسجيل الدخول. يرجى التحقق من البيانات.');
-      throw error;
-    } finally {
-      setIsLoading(false);
     }
-  }, [navigate]);
+  }, [isAuthenticated, auth0User]);
 
-  const register = useCallback(async (email: string, password: string, phone?: string, fullName?: string) => {
-    try {
-      setIsLoading(true);
-      await authRegister(email, password, phone, fullName);
-      const currentUser = getCurrentUser();
-      setUser(currentUser);
-      toast.success('تم إنشاء الحساب بنجاح');
-      navigate('/dashboard');
-    } catch (error: any) {
-      console.error('Registration error:', error);
-      toast.error(error.message || 'فشل إنشاء الحساب. يرجى المحاولة مرة أخرى.');
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [navigate]);
+  const login = async () => {
+    await loginWithRedirect();
+  };
 
-  const logout = useCallback(() => {
-    authLogout();
-    setUser(null);
-    toast.success('تم تسجيل الخروج بنجاح');
-    navigate('/login');
-  }, [navigate]);
+  const register = async () => {
+    await loginWithRedirect({ 
+        authorizationParams: {
+            screen_hint: 'signup',
+        }
+    });
+  };
 
-  const refreshToken = useCallback(async () => {
-    try {
-      await refreshAccessToken();
-      const currentUser = getCurrentUser();
-      setUser(currentUser);
-    } catch (error) {
-      console.error('Token refresh error:', error);
-      logout();
-    }
-  }, [logout]);
+  const logout = () => {
+    auth0Logout({ 
+        logoutParams: {
+            returnTo: window.location.origin 
+        }
+    });
+  };
+
+  const getAccessToken = async () => {
+    return await getAccessTokenSilently();
+  };
+
+  // Check admin role
+  const isAdmin = user?.roles?.includes('admin') || false;
+
+  if (isLoading) {
+      return (
+          <div className="min-h-screen flex items-center justify-center bg-gray-50">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          </div>
+      );
+  }
 
   const value: AuthContextType = {
     user,
-    isAuthenticated: checkIsAuthenticated() && user !== null,
-    isAdmin: checkIsAdmin(),
+    isAuthenticated,
+    isAdmin,
     isLoading,
     login,
     register,
     logout,
-    refreshToken,
+    getAccessToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-/**
- * useAuth Hook
- * 
- * Usage:
- * ```tsx
- * const { user, isAuthenticated, login, logout } = useAuth();
- * ```
- */
-export function useAuth(): AuthContextType {
+export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }
-

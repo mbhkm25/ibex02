@@ -17,8 +17,6 @@
  * Endpoint: https://ep-flat-hall-a7h51kjz.apirest.ap-southeast-2.aws.neon.tech/neondb/rest/v1
  */
 
-import { getAccessToken, logout } from './auth';
-
 const DATA_API_BASE = 'https://ep-flat-hall-a7h51kjz.apirest.ap-southeast-2.aws.neon.tech/neondb/rest/v1';
 
 export interface DataApiOptions {
@@ -48,8 +46,7 @@ export interface DataApiResponse<T> {
  * The apikey is typically the project's anon key, but for RLS
  * we use the JWT token for both.
  */
-function getAuthHeaders(): Record<string, string> {
-  const token = getAccessToken();
+function getAuthHeaders(token: string): Record<string, string> {
   if (!token) {
     throw new Error('Not authenticated. Please log in.');
   }
@@ -100,9 +97,7 @@ function buildQueryString(options: DataApiOptions): string {
  */
 function handleError(response: Response): never {
   if (response.status === 401) {
-    // Unauthorized - logout user
-    logout();
-    window.location.href = '/login';
+    // Unauthorized - logout handled by caller or context
     throw new Error('Session expired. Please log in again.');
   }
 
@@ -120,23 +115,21 @@ function handleError(response: Response): never {
  * 
  * @param table - Table name (e.g., 'service_requests')
  * @param options - Query options (select, filter, order, limit, offset)
+ * @param token - Auth0 Access Token
  * @returns Array of data rows
  * 
  * @example
  * ```typescript
- * const requests = await queryData('service_requests', {
- *   select: 'id,status,business_model,business_name,created_at',
- *   order: 'created_at.desc',
- *   limit: 10
- * });
+ * const requests = await queryData('service_requests', { ... }, token);
  * ```
  */
 export async function queryData<T = any>(
   table: string,
-  options: DataApiOptions = {}
+  options: DataApiOptions = {},
+  token: string
 ): Promise<T[]> {
   try {
-    const headers = getAuthHeaders();
+    const headers = getAuthHeaders(token);
     const queryString = buildQueryString(options);
     const url = `${DATA_API_BASE}/${table}${queryString ? `?${queryString}` : ''}`;
 
@@ -169,21 +162,18 @@ export async function queryData<T = any>(
  * 
  * @param table - Table name
  * @param id - Row ID (UUID)
+ * @param token - Auth0 Access Token
  * @param select - Columns to select (default: '*')
  * @returns Single row or null if not found
- * 
- * @example
- * ```typescript
- * const request = await getById('service_requests', '123e4567-e89b-12d3-a456-426614174000');
- * ```
  */
 export async function getById<T = any>(
   table: string,
   id: string,
+  token: string,
   select: string = '*'
 ): Promise<T | null> {
   try {
-    const headers = getAuthHeaders();
+    const headers = getAuthHeaders(token);
     const url = `${DATA_API_BASE}/${table}?id=eq.${id}&select=${select}`;
 
     const response = await fetch(url, {
@@ -213,20 +203,17 @@ export async function getById<T = any>(
  * Count rows in a table
  * 
  * @param table - Table name
+ * @param token - Auth0 Access Token
  * @param filter - Optional filter conditions
  * @returns Count of rows
- * 
- * @example
- * ```typescript
- * const count = await countRows('service_requests', { status: 'approved' });
- * ```
  */
 export async function countRows(
   table: string,
+  token: string,
   filter?: Record<string, any>
 ): Promise<number> {
   try {
-    const headers = getAuthHeaders();
+    const headers = getAuthHeaders(token);
     const queryString = filter ? buildQueryString({ filter }) : '';
     const url = `${DATA_API_BASE}/${table}${queryString ? `?${queryString}` : ''}`;
 
@@ -260,4 +247,3 @@ export async function countRows(
     return 0;
   }
 }
-

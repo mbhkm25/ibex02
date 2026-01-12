@@ -20,13 +20,12 @@
  * - File type and size validation
  */
 
-import { getAuthHeader } from './auth';
-
 export interface UploadFileOptions {
   file: File;
   businessId: string;
   originalFilename?: string;
   metadata?: Record<string, any>;
+  token: string;
 }
 
 export interface UploadFileResult {
@@ -49,12 +48,13 @@ export interface UploadFileResult {
  * const file = event.target.files[0];
  * const result = await uploadFile({
  *   file,
- *   businessId: '11111111-1111-1111-1111-111111111111'
+ *   businessId: '11111111-1111-1111-1111-111111111111',
+ *   token: 'jwt_token'
  * });
  * ```
  */
 export async function uploadFile(options: UploadFileOptions): Promise<UploadFileResult> {
-  const { file, businessId, originalFilename, metadata } = options;
+  const { file, businessId, originalFilename, metadata, token } = options;
 
   // Validate file
   if (!file) {
@@ -76,10 +76,12 @@ export async function uploadFile(options: UploadFileOptions): Promise<UploadFile
 
   try {
     // STEP 1: Request signed upload URL
-    const authHeaders = getAuthHeader();
-    if (!authHeaders.Authorization) {
+    if (!token) {
       throw new Error('Not authenticated. Please log in.');
     }
+    const authHeaders = {
+        'Authorization': `Bearer ${token}`
+    };
 
     const uploadUrlResponse = await fetch('/api/storage', {
       method: 'POST',
@@ -165,14 +167,17 @@ export async function uploadFile(options: UploadFileOptions): Promise<UploadFile
  * For now, files are accessed via serverless proxy
  * 
  * @param fileId - File ID from database
+ * @param token - Auth0 Access Token
  * @returns Download URL
  */
-export async function getFileUrl(fileId: string): Promise<string> {
+export async function getFileUrl(fileId: string, token: string): Promise<string> {
   try {
-    const authHeaders = getAuthHeader();
-    if (!authHeaders.Authorization) {
+    if (!token) {
       throw new Error('Not authenticated. Please log in.');
     }
+    const authHeaders = {
+        'Authorization': `Bearer ${token}`
+    };
 
     const response = await fetch(`/api/storage?action=download-url&file_id=${fileId}`, {
       method: 'GET',
@@ -190,4 +195,3 @@ export async function getFileUrl(fileId: string): Promise<string> {
     throw error;
   }
 }
-
