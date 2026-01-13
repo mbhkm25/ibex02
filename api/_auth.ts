@@ -20,6 +20,7 @@
 
 import jwt from 'jsonwebtoken';
 import jwksClient, { SigningKey } from 'jwks-rsa';
+import { Permission, UserRole, hasPermission as checkPermission, hasRole as checkRole } from './_rbac';
 
 const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN || 'dev-0rlg3lescok8mwu0.us.auth0.com';
 const AUTH0_ISSUER = process.env.AUTH0_ISSUER || `https://${AUTH0_DOMAIN}/`;
@@ -153,13 +154,46 @@ export async function requireAuth(req: any): Promise<AuthUser> {
 }
 
 /**
- * Require admin role middleware
+ * Require admin role middleware (Legacy - use requireRole instead)
  */
 export async function requireAdmin(req: any): Promise<AuthUser> {
+  return requireRole(req, UserRole.ADMIN);
+}
+
+/**
+ * Require specific role middleware
+ * 
+ * @param req - Request object
+ * @param role - Required role
+ * @returns Authenticated user with required role
+ * @throws Error if user doesn't have the role
+ */
+export async function requireRole(req: any, role: UserRole | string): Promise<AuthUser> {
   const user = await requireAuth(req);
 
-  if (!user.roles || !user.roles.includes('admin')) {
-    throw new Error('FORBIDDEN: Admin role required');
+  if (!user.roles || !checkRole(user.roles, role)) {
+    throw new Error(`FORBIDDEN: ${role} role required`);
+  }
+
+  return user;
+}
+
+/**
+ * Require specific permission middleware
+ * 
+ * This is the preferred method for authorization.
+ * It checks if the user has ANY role that grants the permission.
+ * 
+ * @param req - Request object
+ * @param permission - Required permission
+ * @returns Authenticated user with required permission
+ * @throws Error if user doesn't have the permission
+ */
+export async function requirePermission(req: any, permission: Permission): Promise<AuthUser> {
+  const user = await requireAuth(req);
+
+  if (!user.roles || !checkPermission(user.roles, permission)) {
+    throw new Error(`FORBIDDEN: ${permission} permission required`);
   }
 
   return user;

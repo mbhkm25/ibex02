@@ -96,6 +96,15 @@ These variables are only available in serverless functions, never exposed to the
 - **Default**: `assets`
 - **Where to find**: Cloudflare Dashboard → R2 → Your bucket name
 
+#### `CRON_SECRET`
+- **Purpose**: Secret key for protecting cron job endpoints
+- **Type**: String (secure random)
+- **Security**: ✅ Server-side only (highly sensitive)
+- **Generation**: Use `openssl rand -hex 32` to generate a secure random string
+- **Example**: `a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456`
+- **Usage**: Required by `/api/cron/finalize-ledger` endpoint to prevent unauthorized access
+- **Important**: Must be set in Vercel for cron jobs to work
+
 ---
 
 ## Setup Instructions
@@ -129,6 +138,7 @@ R2_ACCOUNT_ID = <your-r2-account-id>
 R2_ACCESS_KEY_ID = <your-r2-access-key-id>
 R2_SECRET_ACCESS_KEY = <your-r2-secret-access-key>
 R2_BUCKET_NAME = assets
+CRON_SECRET = <generate-using-openssl-rand-hex-32>
 ```
 
 **Important Notes:**
@@ -356,6 +366,7 @@ Check serverless function logs in Vercel dashboard for database connection error
 | `R2_ACCESS_KEY_ID` | Backend | Yes | ✅ Server-side only |
 | `R2_SECRET_ACCESS_KEY` | Backend | Yes | ✅ Server-side only (highly sensitive) |
 | `R2_BUCKET_NAME` | Backend | No | ✅ Server-side only (default: `assets`) |
+| `CRON_SECRET` | Backend | Yes | ✅ Server-side only (highly sensitive) |
 
 ---
 

@@ -1,12 +1,14 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { requireAdmin } from '../_auth';
+import { requirePermission } from '../_auth';
+import { Permission } from '../_rbac';
 import { query } from '../_db';
 
 /**
  * Admin: List Service Requests
  * 
- * Architecture: BFF Pattern
- * - Authenticates admin
+ * Architecture: BFF Pattern + RBAC
+ * - Authenticates user
+ * - Verifies APPROVE_REQUESTS permission (from RBAC contract)
  * - Returns all requests
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -21,8 +23,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // 1. Auth & Admin Check
-    await requireAdmin(req);
+    // 1. Auth & Permission Check (RBAC)
+    await requirePermission(req, Permission.APPROVE_REQUESTS);
 
     // 2. Parse Query Params
     const status = req.query.status as string;

@@ -12,7 +12,8 @@ import {
   ArrowUpRight,
   TrendingUp,
   Building2,
-  History as HistoryIcon
+  History as HistoryIcon,
+  Loader2
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
@@ -21,14 +22,16 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../layout/DashboardLayout';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiFetch } from '../../services/apiClient';
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, getAccessToken } = useAuth();
 
-  // TODO: Fetch recent transactions from API (BFF)
   const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalBalance, setTotalBalance] = useState<number>(0);
+  const [balanceCurrency, setBalanceCurrency] = useState<string>('ر.س');
   
   // Get first name safely
   const firstName = user?.name ? user.name.split(' ')[0] : 'ضيف';
@@ -43,10 +46,42 @@ export function Dashboard() {
   };
 
   useEffect(() => {
-    // TODO: Fetch real data via apiClient
-    setLoading(false);
-    setRecentTransactions([]);
-  }, []);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const token = await getAccessToken();
+        
+        // Fetch total balance across all businesses
+        const summaryData = await apiFetch<{ success: boolean; data: Array<{ currency: string; balance: number }>; total: number }>(
+          '/api/ledger/summary-all',
+          token
+        );
+
+        if (summaryData.success && summaryData.data.length > 0) {
+          // Find primary currency (SAR by default, or first available)
+          const sarBalance = summaryData.data.find(b => b.currency === 'SAR');
+          const primaryBalance = sarBalance || summaryData.data[0];
+          
+          setTotalBalance(primaryBalance.balance);
+          setBalanceCurrency(primaryBalance.currency === 'SAR' ? 'ر.س' : primaryBalance.currency);
+        } else {
+          setTotalBalance(0);
+        }
+
+        // TODO: Fetch recent transactions from all businesses
+        setRecentTransactions([]);
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error);
+        setTotalBalance(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchData();
+    }
+  }, [user, getAccessToken]);
 
   return (
     <DashboardLayout 
@@ -61,8 +96,19 @@ export function Dashboard() {
              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
                 <div className="relative z-10 flex justify-between items-start">
                   <div>
-                    <p className="text-gray-400 text-sm mb-1">الرصيد المتوفر</p>
-                    <h2 className="text-3xl font-bold mb-4">0.00 <span className="text-sm font-normal text-gray-400">ر.س</span></h2>
+                    <p className="text-gray-400 text-sm mb-1">الرصيد الإجمالي</p>
+                    {loading ? (
+                      <div className="flex items-center gap-2 mb-4">
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                        <span className="text-sm text-gray-400">جاري التحميل...</span>
+                      </div>
+                    ) : (
+                      <h2 className="text-3xl font-bold mb-4">
+                        {totalBalance.toLocaleString('ar-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} 
+                        <span className="text-sm font-normal text-gray-400"> {balanceCurrency}</span>
+                      </h2>
+                    )}
+                    <p className="text-xs text-gray-500 mb-3">مجموع أرصدتك في جميع المتاجر</p>
                     <div className="flex gap-3">
                       <Button size="sm" onClick={() => navigate('/scan/pay')} className="bg-white text-gray-900 hover:bg-gray-100 font-bold rounded-xl px-6">
                         <ScanLine className="w-4 h-4 ml-2" />

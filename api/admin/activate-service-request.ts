@@ -51,7 +51,8 @@ type VercelResponse = {
   send: (data: any) => void;
 };
 import { transaction } from '../_db';
-import { requireAdmin } from '../_auth';
+import { requirePermission } from '../_auth';
+import { Permission } from '../_rbac';
 
 /**
  * Template mapping (deterministic)
@@ -102,9 +103,9 @@ export default async function handler(
     });
   }
 
-  // STEP 2: Validate admin authentication (JWT with admin role)
+  // STEP 2: Validate admin authentication (RBAC)
   try {
-    await requireAdmin(req);
+    await requirePermission(req, Permission.APPROVE_REQUESTS);
   } catch (error: any) {
     // Fallback to legacy admin secret for backward compatibility
     if (error.message.includes('UNAUTHORIZED') || error.message.includes('FORBIDDEN')) {

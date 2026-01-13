@@ -18,6 +18,7 @@
 - `AUTH0_ISSUER` - Auth0 Issuer URL (e.g., https://dev-0rlg3lescok8mwu0.us.auth0.com/)
 - `AUTH0_AUDIENCE` - Auth0 API Audience (https://api.ibex.app)
 - `DATABASE_URL` - PostgreSQL connection string من Neon
+- `CRON_SECRET` - Secret key for protecting cron job endpoints (e.g., auto-generated secure random string)
 
 ### Cloudflare R2 Storage
 - `R2_ACCOUNT_ID` - Cloudflare R2 Account ID

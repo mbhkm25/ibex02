@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { UserRole } from './config/rbac';
 
 // Auth Pages
 import { WelcomeScreen } from './components/auth/WelcomeScreen';
@@ -106,13 +107,13 @@ export default function App() {
           {/* Admin Routes - Protected with Admin Role */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="/admin/dashboard" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsers /></ProtectedRoute>} />
-          <Route path="/admin/businesses" element={<ProtectedRoute requireAdmin><AdminBusinesses /></ProtectedRoute>} />
-          <Route path="/admin/packages" element={<ProtectedRoute requireAdmin><AdminPackages /></ProtectedRoute>} />
-          <Route path="/admin/service-requests" element={<ProtectedRoute requireAdmin><AdminServiceRequests /></ProtectedRoute>} />
-          <Route path="/admin/analytics" element={<ProtectedRoute requireAdmin><AdminAnalytics /></ProtectedRoute>} />
-          <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><AdminSettings /></ProtectedRoute>} />
+          <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole={UserRole.ADMIN}><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute requiredRole={UserRole.ADMIN}><AdminUsers /></ProtectedRoute>} />
+          <Route path="/admin/businesses" element={<ProtectedRoute requiredRole={UserRole.ADMIN}><AdminBusinesses /></ProtectedRoute>} />
+          <Route path="/admin/packages" element={<ProtectedRoute requiredRole={UserRole.ADMIN}><AdminPackages /></ProtectedRoute>} />
+          <Route path="/admin/service-requests" element={<ProtectedRoute requiredRole={UserRole.ADMIN}><AdminServiceRequests /></ProtectedRoute>} />
+          <Route path="/admin/analytics" element={<ProtectedRoute requiredRole={UserRole.ADMIN}><AdminAnalytics /></ProtectedRoute>} />
+          <Route path="/admin/settings" element={<ProtectedRoute requiredRole={UserRole.ADMIN}><AdminSettings /></ProtectedRoute>} />
           
           {/* Default Redirect */}
           <Route path="/" element={<Navigate to="/welcome" replace />} />
