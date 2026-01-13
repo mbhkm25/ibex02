@@ -42,7 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           authUser.id, 
           authUser.email || null, 
           authUser.claims.name || authUser.email || 'User', 
-          authUser.picture || null
+          authUser.picture || authUser.claims.picture || null
         ]
       );
       

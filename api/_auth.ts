@@ -59,6 +59,7 @@ export interface AuthUser {
   id: string;
   email?: string;
   phone?: string;
+  picture?: string;
   roles?: string[];
   claims: Record<string, any>;
 }
@@ -107,6 +108,7 @@ export async function verifyToken(token: string): Promise<AuthUser> {
           id: userId,
           email: decoded.email, // Note: Needs custom Action in Auth0 to add email to Access Token
           phone: decoded.phone,
+          picture: decoded.picture,
           roles: Array.isArray(roles) ? roles : [roles],
           claims: decoded,
         };
