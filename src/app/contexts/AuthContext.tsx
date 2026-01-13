@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { Auth0Provider, useAuth0 } from '@auth0/auth0-react';
 import { Loader2 } from 'lucide-react';
 
 export interface AuthUser {
@@ -27,7 +27,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+/**
+ * Inner Auth Provider - Uses Auth0 hooks
+ * Must be inside Auth0Provider
+ */
+function AuthProviderInner({ children }: { children: React.ReactNode }) {
   const {
     user: auth0User,
     isAuthenticated,
@@ -138,6 +142,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+/**
+ * Outer Auth Provider - Wraps Auth0Provider
+ * This is the main entry point for authentication
+ */
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  // Validate environment variables
+  const auth0Domain = import.meta.env.VITE_AUTH0_DOMAIN;
+  const auth0ClientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
+  const auth0Audience = import.meta.env.VITE_AUTH0_AUDIENCE;
+
+  // Critical: Validate domain format (no https://, no trailing slash)
+  if (auth0Domain && (auth0Domain.startsWith('https://') || auth0Domain.endsWith('/'))) {
+    console.error('❌ VITE_AUTH0_DOMAIN must be domain only (e.g., dev-xxx.us.auth0.com), not URL');
+  }
+
+  if (!auth0Domain || !auth0ClientId || !auth0Audience) {
+    const missing = [];
+    if (!auth0Domain) missing.push('VITE_AUTH0_DOMAIN');
+    if (!auth0ClientId) missing.push('VITE_AUTH0_CLIENT_ID');
+    if (!auth0Audience) missing.push('VITE_AUTH0_AUDIENCE');
+    
+    console.error('❌ Missing Auth0 environment variables:', missing.join(', '));
+    console.error('Please set these variables in Vercel or .env.local');
+    
+    // Show error message in production
+    if (import.meta.env.PROD) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', fontFamily: 'system-ui', textAlign: 'center', padding: '20px' }}>
+          <div>
+            <h1 style={{ color: '#dc2626', marginBottom: '16px' }}>Configuration Error</h1>
+            <p style={{ color: '#6b7280', marginBottom: '8px' }}>Missing Auth0 environment variables:</p>
+            <p style={{ color: '#374151', fontFamily: 'monospace', background: '#f3f4f6', padding: '8px', borderRadius: '4px' }}>
+              {missing.join(', ')}
+            </p>
+            <p style={{ color: '#6b7280', marginTop: '16px', fontSize: '14px' }}>
+              Please configure these in Vercel Dashboard → Settings → Environment Variables
+            </p>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // Critical: redirect_uri must match CallbackPage route
+  const redirectUri = window.location.origin + "/callback";
+
+  return (
+    <Auth0Provider
+      domain={auth0Domain || ""}
+      clientId={auth0ClientId || ""}
+      authorizationParams={{
+        redirect_uri: redirectUri,
+        audience: auth0Audience || "",
+      }}
+      cacheLocation="localstorage"
+      useRefreshTokens={true}
+    >
+      <AuthProviderInner>{children}</AuthProviderInner>
+    </Auth0Provider>
+  );
 }
 
 export function useAuth() {
