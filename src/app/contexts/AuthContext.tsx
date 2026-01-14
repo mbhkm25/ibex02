@@ -154,9 +154,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const auth0ClientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
   const auth0Audience = import.meta.env.VITE_AUTH0_AUDIENCE;
 
+  // Debug logging (only in development or if explicitly enabled)
+  if (import.meta.env.DEV || import.meta.env.VITE_DEBUG_AUTH0 === 'true') {
+    console.log('🔍 Auth0 Configuration Debug:', {
+      domain: auth0Domain ? `${auth0Domain.substring(0, 10)}...` : 'MISSING',
+      clientId: auth0ClientId ? `${auth0ClientId.substring(0, 10)}...` : 'MISSING',
+      audience: auth0Audience || 'MISSING',
+      origin: window.location.origin,
+      redirectUri: window.location.origin + "/callback",
+      mode: import.meta.env.MODE,
+      prod: import.meta.env.PROD,
+    });
+  }
+
   // Critical: Validate domain format (no https://, no trailing slash)
   if (auth0Domain && (auth0Domain.startsWith('https://') || auth0Domain.endsWith('/'))) {
     console.error('❌ VITE_AUTH0_DOMAIN must be domain only (e.g., dev-xxx.us.auth0.com), not URL');
+    console.error('Current value:', auth0Domain);
   }
 
   if (!auth0Domain || !auth0ClientId || !auth0Audience) {
@@ -166,6 +180,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!auth0Audience) missing.push('VITE_AUTH0_AUDIENCE');
     
     console.error('❌ Missing Auth0 environment variables:', missing.join(', '));
+    console.error('Current origin:', window.location.origin);
     console.error('Please set these variables in Vercel or .env.local');
     
     // Show error message in production
@@ -181,6 +196,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             <p style={{ color: '#6b7280', marginTop: '16px', fontSize: '14px' }}>
               Please configure these in Vercel Dashboard → Settings → Environment Variables
             </p>
+            <details style={{ marginTop: '20px', textAlign: 'left', maxWidth: '600px' }}>
+              <summary style={{ cursor: 'pointer', color: '#6b7280' }}>Debug Info</summary>
+              <pre style={{ background: '#f3f4f6', padding: '10px', borderRadius: '4px', fontSize: '12px', marginTop: '10px', overflow: 'auto' }}>
+                {JSON.stringify({
+                  origin: window.location.origin,
+                  mode: import.meta.env.MODE,
+                  prod: import.meta.env.PROD,
+                  hasDomain: !!auth0Domain,
+                  hasClientId: !!auth0ClientId,
+                  hasAudience: !!auth0Audience,
+                }, null, 2)}
+              </pre>
+            </details>
           </div>
         </div>
       );
@@ -189,6 +217,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Critical: redirect_uri must match CallbackPage route
   const redirectUri = window.location.origin + "/callback";
+  
+  // Log redirect URI for debugging
+  if (import.meta.env.DEV || import.meta.env.VITE_DEBUG_AUTH0 === 'true') {
+    console.log('🔗 Redirect URI:', redirectUri);
+  }
 
   return (
     <Auth0Provider
