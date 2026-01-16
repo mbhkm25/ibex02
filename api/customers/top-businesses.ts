@@ -112,7 +112,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Return top 3
     const top3 = businessesWithStats.slice(0, 3);
 
-    console.log(`[TopBusinesses] Returning ${top3.length} businesses for user ${internalUserId}`);
+    console.log(`[TopBusinesses] Found ${customersResult.rows.length} customer profiles`);
+    console.log(`[TopBusinesses] Calculated stats for ${businessesWithStats.length} businesses`);
+    console.log(`[TopBusinesses] Returning top ${top3.length} businesses for user ${internalUserId}`);
+    console.log(`[TopBusinesses] Top businesses:`, top3.map(b => ({ name: b.business_name, balance: b.balance, transactions: b.transaction_count })));
 
     return res.status(200).json({
       success: true,

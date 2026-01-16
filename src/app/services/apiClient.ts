@@ -28,11 +28,28 @@ export async function apiFetch<T = any>(
       if (response.status === 401) {
         throw new Error('UNAUTHORIZED');
       }
-      const errorData = await response.json().catch(() => ({}));
+      const errorText = await response.text();
+      let errorData: any = {};
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { error: errorText || `API Error: ${response.status}` };
+      }
       throw new Error(errorData.error || errorData.message || `API Error: ${response.status}`);
     }
 
-    return await response.json();
+    const responseData = await response.json();
+    
+    // Handle different response structures
+    // Some APIs return { success: true, data: ... }
+    // Others return data directly
+    if (responseData.success !== undefined) {
+      // If response has success field, return the whole object
+      return responseData;
+    }
+    
+    // Otherwise return data directly
+    return responseData;
   } catch (error) {
     throw error;
   }
