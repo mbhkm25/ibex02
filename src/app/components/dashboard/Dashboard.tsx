@@ -56,6 +56,8 @@ export function Dashboard() {
         setLoading(true);
         const token = await getAccessToken();
         
+        console.log('🔍 Fetching top businesses...');
+        
         // Fetch top 3 businesses by usage
         const topBusinessesData = await apiFetch<{ success: boolean; data: Array<{
           business_id: string;
@@ -68,17 +70,22 @@ export function Dashboard() {
           token
         );
 
+        console.log('📊 Top businesses response:', topBusinessesData);
+
         // Handle response structure: apiFetch returns the JSON directly
         if (topBusinessesData && topBusinessesData.success && topBusinessesData.data) {
+          console.log('✅ Setting top businesses:', topBusinessesData.data);
           setTopBusinesses(topBusinessesData.data);
         } else {
+          console.log('⚠️ No businesses found or invalid response');
           setTopBusinesses([]);
         }
 
         // TODO: Fetch recent transactions from all businesses
         setRecentTransactions([]);
-      } catch (error) {
-        console.error('Failed to fetch dashboard data:', error);
+      } catch (error: any) {
+        console.error('❌ Failed to fetch dashboard data:', error);
+        console.error('Error details:', error.message, error.stack);
         setTopBusinesses([]);
       } finally {
         setLoading(false);

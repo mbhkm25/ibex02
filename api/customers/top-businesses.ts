@@ -112,6 +112,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Return top 3
     const top3 = businessesWithStats.slice(0, 3);
 
+    console.log(`[TopBusinesses] Returning ${top3.length} businesses for user ${internalUserId}`);
+
     return res.status(200).json({
       success: true,
       data: top3
