@@ -30,8 +30,13 @@ export function Dashboard() {
 
   const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [totalBalance, setTotalBalance] = useState<number>(0);
-  const [balanceCurrency, setBalanceCurrency] = useState<string>('ر.س');
+  const [topBusinesses, setTopBusinesses] = useState<Array<{
+    business_id: string;
+    business_name: string;
+    logo_file_id?: string;
+    balance: number;
+    transaction_count: number;
+  }>>([]);
   
   // Get first name safely
   const firstName = user?.name ? user.name.split(' ')[0] : 'ضيف';
@@ -51,28 +56,30 @@ export function Dashboard() {
         setLoading(true);
         const token = await getAccessToken();
         
-        // Fetch total balance across all businesses
-        const summaryData = await apiFetch<{ success: boolean; data: Array<{ currency: string; balance: number }>; total: number }>(
-          '/api/ledger/summary-all',
+        // Fetch top 3 businesses by usage
+        const topBusinessesData = await apiFetch<{ success: boolean; data: Array<{
+          business_id: string;
+          business_name: string;
+          logo_file_id?: string;
+          balance: number;
+          transaction_count: number;
+        }> }>(
+          '/api/customers/top-businesses',
           token
         );
 
-        if (summaryData.success && summaryData.data.length > 0) {
-          // Find primary currency (SAR by default, or first available)
-          const sarBalance = summaryData.data.find(b => b.currency === 'SAR');
-          const primaryBalance = sarBalance || summaryData.data[0];
-          
-          setTotalBalance(primaryBalance.balance);
-          setBalanceCurrency(primaryBalance.currency === 'SAR' ? 'ر.س' : primaryBalance.currency);
+        // Handle response structure: apiFetch returns the JSON directly
+        if (topBusinessesData && topBusinessesData.success && topBusinessesData.data) {
+          setTopBusinesses(topBusinessesData.data);
         } else {
-          setTotalBalance(0);
+          setTopBusinesses([]);
         }
 
         // TODO: Fetch recent transactions from all businesses
         setRecentTransactions([]);
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
-        setTotalBalance(0);
+        setTopBusinesses([]);
       } finally {
         setLoading(false);
       }
@@ -92,37 +99,79 @@ export function Dashboard() {
           {/* Right Column (Main Stats & Actions) */}
           <div className="lg:col-span-8 space-y-6">
             
-             {/* Hero Card - Mobile First Focus */}
+             {/* Top Businesses Card */}
              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
-                <div className="relative z-10 flex justify-between items-start">
-                  <div>
-                    <p className="text-gray-400 text-sm mb-1">الرصيد الإجمالي</p>
-                    {loading ? (
-                      <div className="flex items-center gap-2 mb-4">
-                        <Loader2 className="w-6 h-6 animate-spin" />
-                        <span className="text-sm text-gray-400">جاري التحميل...</span>
-                      </div>
-                    ) : (
-                      <h2 className="text-3xl font-bold mb-4">
-                        {totalBalance.toLocaleString('ar-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} 
-                        <span className="text-sm font-normal text-gray-400"> {balanceCurrency}</span>
-                      </h2>
-                    )}
-                    <p className="text-xs text-gray-500 mb-3">مجموع أرصدتك في جميع المتاجر</p>
-                    <div className="flex gap-3">
-                      <Button size="sm" onClick={() => navigate('/scan/pay')} className="bg-white text-gray-900 hover:bg-gray-100 font-bold rounded-xl px-6">
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">أكثر المتاجر استخداماً</p>
+                      <h2 className="text-xl font-bold">أرصدتك الرئيسية</h2>
+                    </div>
+                    <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                      <Wallet className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+
+                  {loading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-white" />
+                    </div>
+                  ) : topBusinesses.length > 0 ? (
+                    <div className="space-y-3">
+                      {topBusinesses.map((business, index) => (
+                        <div
+                          key={business.business_id}
+                          onClick={() => navigate(`/wallet/${business.business_id}`)}
+                          className="bg-white/10 hover:bg-white/20 rounded-xl p-4 cursor-pointer transition-all backdrop-blur-sm border border-white/10"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3 flex-1">
+                              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                                <ShoppingBag className="w-5 h-5 text-white" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-white text-sm truncate">{business.business_name}</p>
+                                <p className="text-xs text-gray-400">
+                                  {business.transaction_count} عملية
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-left">
+                              <p className={`text-lg font-black ${business.balance >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
+                                {business.balance >= 0 ? '+' : ''}{business.balance.toLocaleString('ar-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </p>
+                              <p className="text-xs text-gray-400">ر.س</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-gray-400 text-sm mb-3">لا توجد متاجر بعد</p>
+                      <Button 
+                        size="sm" 
+                        onClick={() => navigate('/explore')} 
+                        className="bg-white text-gray-900 hover:bg-gray-100 font-bold rounded-xl"
+                      >
+                        <Search className="w-4 h-4 ml-2" />
+                        اكتشف المتاجر
+                      </Button>
+                    </div>
+                  )}
+
+                  {topBusinesses.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-white/10">
+                      <Button 
+                        size="sm" 
+                        onClick={() => navigate('/scan/pay')} 
+                        className="w-full bg-white text-gray-900 hover:bg-gray-100 font-bold rounded-xl"
+                      >
                         <ScanLine className="w-4 h-4 ml-2" />
                         دفع فوري
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => navigate('/scan/store')} className="bg-transparent border-white/20 text-white hover:bg-white/10 rounded-xl">
-                        <QrCode className="w-4 h-4 ml-2" />
-                        مسح كود
-                      </Button>
                     </div>
-                  </div>
-                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                    <Wallet className="w-6 h-6 text-white" />
-                  </div>
+                  )}
                 </div>
                 {/* Decorative circles */}
                 <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-blue-500/20 rounded-full blur-2xl"></div>

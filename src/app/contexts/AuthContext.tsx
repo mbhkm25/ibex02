@@ -66,26 +66,44 @@ function AuthProviderInner({ children }: { children: React.ReactNode }) {
         // Call Bootstrap Endpoint to sync user with Neon DB
         try {
           const token = await getAccessTokenSilently();
-          await fetch('/api/auth/bootstrap', {
+          const response = await fetch('/api/auth/bootstrap', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
-          })
-          .then(res => res.json())
-          .then(data => {
-            if (data.ok && data.user) {
-              // Update user with Neon DB ID
-              setUser(prev => prev ? { 
-                ...prev, 
-                id: data.user.id, // Use Neon UUID as primary ID
-                auth0Id: prev.sub // Keep Auth0 ID reference
-              } : null);
-            }
           });
-        } catch (err) {
+
+          // Check if response is OK
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Bootstrap failed:', response.status, errorText);
+            // Try to parse as JSON, fallback to text
+            try {
+              const errorData = JSON.parse(errorText);
+              console.error('Bootstrap error details:', errorData);
+            } catch {
+              console.error('Bootstrap error (non-JSON):', errorText);
+            }
+            return; // Don't update user if bootstrap fails
+          }
+
+          // Parse JSON response
+          const data = await response.json();
+          
+          if (data.ok && data.user) {
+            // Update user with Neon DB ID
+            setUser(prev => prev ? { 
+              ...prev, 
+              id: data.user.id, // Use Neon UUID as primary ID
+              auth0Id: prev.sub // Keep Auth0 ID reference
+            } : null);
+          } else {
+            console.warn('Bootstrap response missing user data:', data);
+          }
+        } catch (err: any) {
           console.error('Failed to bootstrap user:', err);
+          // Don't throw - allow user to continue even if bootstrap fails
         }
       } else {
         setUser(null);

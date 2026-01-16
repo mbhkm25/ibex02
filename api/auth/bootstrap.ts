@@ -57,8 +57,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (error: any) {
     console.error('Bootstrap error:', error);
-    res.status(error.message.includes('UNAUTHORIZED') ? 401 : 500).json({ 
-      error: error.message || 'Internal Server Error' 
+    const status = error.message?.includes('UNAUTHORIZED') ? 401 : 500;
+    const errorMessage = error.message || 'Internal Server Error';
+    
+    // Ensure we always return valid JSON
+    return res.status(status).json({ 
+      ok: false,
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 }
